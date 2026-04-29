@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "incremental": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@spinvisa/db": ["../../packages/db/src/index.ts"],
+      "@spinvisa/db/*": ["../../packages/db/src/*"],
+      "@spinvisa/auth": ["../../packages/auth/src/index.ts"],
+      "@spinvisa/auth/*": ["../../packages/auth/src/*"],
+      "@spinvisa/ui": ["../../packages/ui/src/index.ts"],
+      "@spinvisa/ui/*": ["../../packages/ui/src/*"],
+      "@spinvisa/api-types": ["../../packages/api-types/src/index.ts"],
+      "@spinvisa/observability": ["../../packages/observability/src/index.ts"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

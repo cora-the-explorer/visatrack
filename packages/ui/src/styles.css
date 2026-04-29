@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* SpinVisa brand tokens */
+    --svw-bg-dark: 240 12% 5%;
+    --svw-pink: 337 100% 59%;
+    --svw-teal: 175 100% 42%;
+    --svw-ink: 240 22% 93%;
+
+    /* shadcn semantic tokens — dark-first */
+    --background: var(--svw-bg-dark);
+    --foreground: var(--svw-ink);
+
+    --card: 240 10% 8%;
+    --card-foreground: var(--svw-ink);
+
+    --popover: 240 10% 8%;
+    --popover-foreground: var(--svw-ink);
+
+    --primary: var(--svw-pink);
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: var(--svw-teal);
+    --secondary-foreground: 240 12% 5%;
+
+    --muted: 240 8% 14%;
+    --muted-foreground: 240 8% 65%;
+
+    --accent: var(--svw-teal);
+    --accent-foreground: 240 12% 5%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 8% 18%;
+    --input: 240 8% 18%;
+    --ring: var(--svw-pink);
+
+    --radius: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+}
