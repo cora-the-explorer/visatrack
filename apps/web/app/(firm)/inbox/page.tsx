@@ -5,9 +5,9 @@ export const metadata = { title: 'Inbox' };
 
 export default function InboxPage() {
   return (
-    <div className="flex h-full flex-col">
-      <Topbar title="Attorney inbox" />
+    <>
+      <Topbar title="Review Queue" />
       <GateQueue />
-    </div>
+    </>
   );
 }

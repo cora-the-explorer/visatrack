@@ -7,3 +7,7 @@ export { Label } from './components/label';
 export { Separator } from './components/separator';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './components/tabs';
 export { Avatar, AvatarFallback, AvatarImage } from './components/avatar';
+export { KanbanCard, type KanbanCardProps } from './components/kanban-card';
+export { TimelineItem, type TimelineItemProps, type TimelineStatus } from './components/timeline-item';
+export { InboxItem, type InboxItemProps, type InboxUrgency } from './components/inbox-item';
+export { ToastProvider, useToast, type ToastMessage, type ToastVariant } from './components/toast';

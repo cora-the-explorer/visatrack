@@ -1,64 +1,249 @@
-import { Badge, Card, CardContent } from '@spinvisa/ui';
+'use client';
 
-const COLUMNS = [
-  { id: 'intake', label: 'Intake', accent: 'bg-svw-teal/20 text-svw-teal' },
-  { id: 'evidence', label: 'Evidence', accent: 'bg-svw-pink/20 text-svw-pink' },
-  { id: 'drafting', label: 'Drafting', accent: 'bg-amber-500/20 text-amber-400' },
-  { id: 'review', label: 'Attorney Review', accent: 'bg-violet-500/20 text-violet-400' },
-  { id: 'filed', label: 'Filed', accent: 'bg-emerald-500/20 text-emerald-400' },
-] as const;
+import Link from 'next/link';
+import { useRef, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  DndContext,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { Briefcase } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { KanbanCard } from '@spinvisa/ui';
+import { trpc } from '@/lib/trpc';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
+import type { CaseStatus } from '@spinvisa/api-types';
 
-const SAMPLE_CARDS: Record<(typeof COLUMNS)[number]['id'], { id: string; title: string; visa: string; due: string }[]> = {
-  intake: [
-    { id: 'c1', title: 'NOVA — electronic music producer', visa: 'O-1B', due: 'May 12' },
-    { id: 'c2', title: 'Lior Cohen — concert pianist', visa: 'O-1B', due: 'May 18' },
-  ],
-  evidence: [
-    { id: 'c3', title: 'Saoirse — visual artist', visa: 'O-1B', due: 'May 5' },
-    { id: 'c4', title: 'Volkov Quartet — chamber group', visa: 'P-1B', due: 'May 9' },
-  ],
-  drafting: [
-    { id: 'c5', title: 'Jules Adeola — author/poet', visa: 'O-1B', due: 'May 2' },
-  ],
-  review: [
-    { id: 'c6', title: 'Maya Sato — choreographer', visa: 'O-1B', due: 'Apr 30' },
-  ],
-  filed: [
-    { id: 'c7', title: 'Ibrahim Ndiaye — DJ', visa: 'O-1B', due: 'Filed Apr 22' },
-  ],
+type StageId = 'intake' | 'docs' | 'draft' | 'rfe' | 'approved' | 'denied';
+
+const COLUMNS: { id: StageId; title: string }[] = [
+  { id: 'intake', title: 'Intake' },
+  { id: 'docs', title: 'Docs Gathering' },
+  { id: 'draft', title: 'Petition Draft' },
+  { id: 'rfe', title: 'RFE Response' },
+  { id: 'approved', title: 'Approved' },
+  { id: 'denied', title: 'Denied' },
+];
+
+const STATUS_TO_STAGE: Record<CaseStatus, StageId> = {
+  intake: 'intake',
+  evidence: 'docs',
+  drafting: 'draft',
+  review: 'draft',
+  filed: 'approved',
+  approved: 'approved',
+  denied: 'denied',
+  rfe: 'rfe',
+  withdrawn: 'denied',
 };
 
-export function PipelineBoard() {
+const STAGE_TO_STATUS: Record<StageId, CaseStatus> = {
+  intake: 'intake',
+  docs: 'evidence',
+  draft: 'drafting',
+  rfe: 'rfe',
+  approved: 'approved',
+  denied: 'denied',
+};
+
+interface PipelineRow {
+  id: string;
+  name: string;
+  type: string;
+  attorney: string;
+  days: number;
+  score: number;
+  stage: StageId;
+}
+
+function daysSince(d: Date | null | undefined): number {
+  if (!d) return 0;
+  return Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000));
+}
+
+function DraggableCard({ row }: { row: PipelineRow }) {
+  const router = useRouter();
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({ id: row.id });
+
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
+    : undefined;
+
   return (
-    <div className="grid h-full grid-cols-5 gap-4 overflow-x-auto p-6">
-      {COLUMNS.map((column) => {
-        const cards = SAMPLE_CARDS[column.id];
-        return (
-          <div key={column.id} className="flex min-w-[220px] flex-col">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className={`rounded px-2 py-0.5 text-xs font-medium ${column.accent}`}>
-                  {column.label}
-                </span>
-                <span className="text-xs text-muted-foreground">{cards.length}</span>
-              </div>
-            </div>
-            <div className="flex-1 space-y-2 overflow-y-auto rounded-lg bg-muted/40 p-2">
-              {cards.map((card) => (
-                <Card key={card.id} className="cursor-pointer transition-colors hover:border-primary/40">
-                  <CardContent className="space-y-2 p-3">
-                    <div className="text-sm font-medium leading-snug">{card.title}</div>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline">{card.visa}</Badge>
-                      <span className="text-xs text-muted-foreground">{card.due}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onPointerDown={(e) => {
+        pointerStart.current = { x: e.clientX, y: e.clientY };
+      }}
+      onClick={(e) => {
+        if (!pointerStart.current) return;
+        const dx = e.clientX - pointerStart.current.x;
+        const dy = e.clientY - pointerStart.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 5) {
+          router.push(`/cases/${row.id}`);
+        }
+        pointerStart.current = null;
+      }}
+    >
+      <KanbanCard
+        name={row.name}
+        visa={row.type}
+        attorney={row.attorney}
+        days={row.days}
+        score={row.score}
+        dragging={isDragging}
+      />
+    </div>
+  );
+}
+
+function DroppableColumn({
+  id,
+  title,
+  count,
+  children,
+}: {
+  id: StageId;
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex w-[300px] min-w-[300px] flex-col rounded-xl bg-slate-100 p-4 transition ${
+        isOver ? 'ring-2 ring-indigo-300' : ''
+      }`}
+    >
+      <div className="mb-4 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <span>{title}</span>
+        <span>{count}</span>
+      </div>
+      <div className="flex-1 space-y-2 overflow-y-auto">{children}</div>
+    </div>
+  );
+}
+
+export function PipelineBoard() {
+  const queryClient = useQueryClient();
+  const utils = trpc.useUtils();
+  const { data, isLoading } = trpc.cases.list.useQuery();
+  const updateCase = trpc.cases.update.useMutation({
+    onSuccess: () => utils.cases.list.invalidate(),
+  });
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const rows: PipelineRow[] = useMemo(() => {
+    if (!data) return [];
+    return data.map((c) => ({
+      id: c.id,
+      name: c.artistName ?? c.title,
+      type: c.visaType,
+      attorney: c.leadAttorneyName ?? 'Unassigned',
+      days: daysSince(c.createdAt),
+      score: 0,
+      stage: STATUS_TO_STAGE[c.status],
+    }));
+  }, [data]);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    const channel = supabase
+      .channel('cases-pipeline')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cases' },
+        () => {
+          utils.cases.list.invalidate();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [utils, queryClient]);
+
+  const grouped = useMemo(() => {
+    const map: Record<StageId, PipelineRow[]> = {
+      intake: [],
+      docs: [],
+      draft: [],
+      rfe: [],
+      approved: [],
+      denied: [],
+    };
+    for (const row of rows) map[row.stage].push(row);
+    return map;
+  }, [rows]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const id = String(active.id);
+    const stage = over.id as StageId;
+    const row = rows.find((r) => r.id === id);
+    if (!row || row.stage === stage) return;
+    updateCase.mutate({ id, patch: { status: STAGE_TO_STATUS[stage] } });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+        Loading pipeline…
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="mx-auto mt-16 max-w-md rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-500">
+            <Briefcase className="h-7 w-7" />
           </div>
-        );
-      })}
+          <h2 className="text-lg font-semibold text-slate-800">No cases yet</h2>
+          <p className="mt-1.5 text-sm text-slate-500">Create your first case to get started.</p>
+          <Link
+            href="/cases/new"
+            className="mt-6 inline-flex items-center justify-center rounded-md bg-indigo-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600"
+          >
+            + New Case
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-8">
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <div className="flex h-[calc(100vh-180px)] gap-6 overflow-x-auto pb-4">
+          {COLUMNS.map((col) => (
+            <DroppableColumn
+              key={col.id}
+              id={col.id}
+              title={col.title}
+              count={grouped[col.id].length}
+            >
+              {grouped[col.id].map((row) => (
+                <DraggableCard key={row.id} row={row} />
+              ))}
+            </DroppableColumn>
+          ))}
+        </div>
+      </DndContext>
     </div>
   );
 }

@@ -1,9 +1,14 @@
 import { EvidenceTable } from '@/components/evidence/evidence-table';
 
-export default function CaseEvidencePage() {
+interface Props {
+  params: Promise<{ caseId: string }>;
+}
+
+export default async function CaseEvidencePage({ params }: Props) {
+  const { caseId } = await params;
   return (
     <div className="p-6">
-      <EvidenceTable />
+      <EvidenceTable caseId={caseId} />
     </div>
   );
 }

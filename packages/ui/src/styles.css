@@ -4,42 +4,36 @@
 
 @layer base {
   :root {
-    /* SpinVisa brand tokens */
-    --svw-bg-dark: 240 12% 5%;
-    --svw-pink: 337 100% 59%;
-    --svw-teal: 175 100% 42%;
-    --svw-ink: 240 22% 93%;
+    /* SpinVisa design tokens — matches AI Studio prototype (HSL format) */
+    --background: 210 40% 98%;      /* slate-50  #f8fafc */
+    --foreground: 222 47% 18%;      /* slate-800 #1e293b */
 
-    /* shadcn semantic tokens — dark-first */
-    --background: var(--svw-bg-dark);
-    --foreground: var(--svw-ink);
+    --card: 0 0% 100%;              /* white */
+    --card-foreground: 222 47% 18%;
 
-    --card: 240 10% 8%;
-    --card-foreground: var(--svw-ink);
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 18%;
 
-    --popover: 240 10% 8%;
-    --popover-foreground: var(--svw-ink);
-
-    --primary: var(--svw-pink);
+    --primary: 239 84% 67%;         /* indigo-500 #6366f1 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: var(--svw-teal);
-    --secondary-foreground: 240 12% 5%;
+    --secondary: 214 32% 95%;       /* slate-100 #f1f5f9 */
+    --secondary-foreground: 222 47% 18%;
 
-    --muted: 240 8% 14%;
-    --muted-foreground: 240 8% 65%;
+    --muted: 214 32% 95%;           /* slate-100 */
+    --muted-foreground: 215 16% 47%; /* slate-500 #64748b */
 
-    --accent: var(--svw-teal);
-    --accent-foreground: 240 12% 5%;
+    --accent: 226 100% 97%;         /* indigo-50 #eef2ff */
+    --accent-foreground: 244 55% 41%; /* indigo-700 #4338ca */
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 60%;       /* red-500 #ef4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 8% 18%;
-    --input: 240 8% 18%;
-    --ring: var(--svw-pink);
+    --border: 214 32% 91%;          /* slate-200 #e2e8f0 */
+    --input: 214 32% 91%;
+    --ring: 239 84% 67%;            /* indigo-500 #6366f1 */
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
   }
 }
 

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpinVisa | Immigration SaaS Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #94a3b8;
+            --sidebar-active: #ffffff;
+            --bg-main: #f8fafc;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --white: #ffffff;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 8px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
+
+        aside { width: 260px; background: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; padding: 1.5rem; border-right: 1px solid var(--border); }
+        .logo { color: white; font-weight: 700; font-size: 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; }
+        .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+        nav { flex: 1; }
+        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; border-radius: var(--radius); cursor: pointer; transition: all 0.2s; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.9rem; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { background: var(--accent); color: white; }
+        .nav-item svg { width: 18px; margin-right: 12px; opacity: 0.8; }
+
+        main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { height: 64px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
+        .search-bar { background: #f1f5f9; border: none; padding: 0.5rem 1rem; border-radius: 6px; width: 300px; font-size: 0.85rem; }
+        .view-container { flex: 1; overflow-y: auto; padding: 2rem; display: none; }
+        .view-container.active { display: block; }
+
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .badge-visa { background: #e0e7ff; color: #4338ca; }
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-ai { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+        .btn { padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid var(--border); background: white; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--accent); color: white; border: none; }
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        .kanban-board { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 1rem; height: calc(100vh - 180px); }
+        .kanban-col { min-width: 300px; width: 300px; display: flex; flex-direction: column; background: #f1f5f9; border-radius: 12px; padding: 1rem; }
+        .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-weight: 600; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .card-list { flex: 1; overflow-y: auto; }
+        .kanban-card { background: white; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border); box-shadow: var(--shadow); cursor: grab; }
+        .kanban-card:active { cursor: grabbing; }
+        .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem; }
+        .card-meta { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem; }
+        .ai-score { margin-left: auto; display: flex; align-items: center; gap: 4px; color: var(--accent); font-weight: 700; }
+
+        .detail-grid { display: grid; grid-template-columns: 280px 1fr 300px; gap: 1.5rem; height: 100%; }
+        .timeline-col { border-right: 1px solid var(--border); padding-right: 1.5rem; }
+        .timeline-item { position: relative; padding-left: 1.5rem; padding-bottom: 2rem; border-left: 2px solid var(--border); }
+        .timeline-item::before { content: ''; position: absolute; left: -7px; top: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--border); border: 2px solid white; }
+        .timeline-item.completed { border-left-color: var(--accent); }
+        .timeline-item.completed::before { background: var(--accent); }
+        .timeline-date { font-size: 0.7rem; color: var(--text-muted); }
+        .timeline-title { font-size: 0.85rem; font-weight: 600; margin: 2px 0; }
+
+        .content-card { background: white; border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+        .content-tabs { display: flex; border-bottom: 1px solid var(--border); background: #f8fafc; }
+        .tab { padding: 1rem 1.5rem; font-size: 0.85rem; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab.active { border-bottom-color: var(--accent); color: var(--accent); background: white; }
+        .tab-body { padding: 1.5rem; flex: 1; overflow-y: auto; font-size: 0.9rem; line-height: 1.6; }
+        .metadata-col section { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
+        .meta-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem; }
+        .meta-value { font-size: 0.9rem; font-weight: 500; margin-bottom: 1rem; }
+
+        .review-bar { position: fixed; bottom: 0; left: 260px; right: 0; height: 70px; background: white; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; z-index: 10; }
+
+        .inbox-container { display: flex; height: calc(100vh - 150px); border: 1px solid var(--border); border-radius: 12px; background: white; overflow: hidden; }
+        .inbox-list { width: 350px; border-right: 1px solid var(--border); overflow-y: auto; background: #f8fafc; }
+        .inbox-item { padding: 1.25rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .inbox-item:hover { background: #f1f5f9; }
+        .inbox-item.active { background: white; border-left: 4px solid var(--accent); }
+        .urgency-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .draft-preview { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .draft-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+        .draft-body { padding: 2rem; overflow-y: auto; background: #fff; font-family: 'Courier New', Courier, monospace; }
+        .ai-annotation { background: #fef3c7; border-bottom: 2px solid #f59e0b; padding: 0 2px; cursor: help; position: relative; }
+        .ai-annotation:hover::after { content: attr(data-comment); position: absolute; top: 100%; left: 0; background: #1e293b; color: white; padding: 0.5rem; border-radius: 4px; font-family: 'Inter'; font-size: 0.75rem; width: 200px; z-index: 20; }
+        .dragging { opacity: 0.5; transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    <aside>
+        <div class="logo">
+            <div class="logo-icon">S</div>
+            SpinVisa
+        </div>
+        <nav>
+            <div class="nav-item active" onclick="switchView('pipeline', event)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Pipeline
+            </div>
+            <div class="nav-item" onclick="switchView('inbox', event)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                Inbox Queue
+            </div>
+            <div class="nav-item" onclick="switchView('detail', event)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Active Case
+            </div>
+        </nav>
+        <div class="nav-item" style="margin-top: auto; opacity: 0.6;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Settings
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <h1 id="view-title" style="font-size: 1.25rem; font-weight: 700;">Case Pipeline</h1>
+                <input type="text" class="search-bar" placeholder="Search cases, documents, RFEs...">
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <button class="btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export
+                </button>
+                <button class="btn btn-primary">+ New Case</button>
+            </div>
+        </header>
+
+        <div id="pipeline" class="view-container active">
+            <div class="kanban-board" id="kanbanBoard"></div>
+        </div>
+
+        <div id="detail" class="view-container">
+            <div class="detail-grid">
+                <div class="timeline-col">
+                    <h3 style="font-size: 0.9rem; margin-bottom: 1.5rem;">Case History</h3>
+                    <div class="timeline-item completed">
+                        <div class="timeline-date">Oct 12, 2023</div>
+                        <div class="timeline-title">Intake Completed</div>
+                    </div>
+                    <div class="timeline-item completed">
+                        <div class="timeline-date">Oct 14, 2023</div>
+                        <div class="timeline-title">Docs Verified (AI)</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">Oct 18, 2023</div>
+                        <div class="timeline-title">Petition Draft Generated</div>
+                    </div>
+                    <div class="timeline-item" style="border-left-color: transparent;">
+                        <div class="timeline-date">Pending</div>
+                        <div class="timeline-title" style="color: var(--text-muted);">Attorney Review</div>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="content-tabs">
+                        <div class="tab active">AI Draft</div>
+                        <div class="tab">Documents (12)</div>
+                        <div class="tab">Notes</div>
+                        <div class="tab">Activity</div>
+                    </div>
+                    <div class="tab-body">
+                        <h2 style="margin-bottom: 1rem;">O-1B Petition: Extraordinary Ability</h2>
+                        <p><b>Petitioner:</b> Elena Rodriguez<br><b>Field:</b> Digital Architectural Visualization</p>
+                        <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--border);">
+                        <p>Dear Director,<br><br>This petition is submitted on behalf of Ms. Elena Rodriguez for O-1B classification as an individual of extraordinary ability in the arts. Ms. Rodriguez has attained sustained national and international acclaim...</p>
+                        <p style="margin-top: 1rem;">Her work has been featured in leading industry publications including <i>Architectural Digest</i> and <i>Visual Effects Quarterly</i>. Furthermore, she has played a lead role in projects that have grossed over $200M in international design contracts...</p>
+                    </div>
+                </div>
+                <div class="metadata-col">
+                    <section>
+                        <div class="meta-label">Client</div>
+                        <div class="meta-value">Elena Rodriguez</div>
+                        <div class="meta-label">Visa Type</div>
+                        <div class="meta-value"><span class="badge badge-visa">O-1B Artist</span></div>
+                        <div class="meta-label">Assigned Attorney</div>
+                        <div class="meta-value">Marcus Thorne</div>
+                        <div class="meta-label">Priority Date</div>
+                        <div class="meta-value">Nov 15, 2023</div>
+                    </section>
+                    <section style="border-left: 4px solid var(--accent);">
+                        <div class="meta-label">AI Analysis</div>
+                        <div class="meta-value" style="color: var(--accent); font-size: 1.2rem; font-weight: 800;">94% Match</div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Confidence high based on 8/10 criteria met in supporting evidence.</p>
+                    </section>
+                </div>
+            </div>
+            <div class="review-bar">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="badge badge-ai">AI-Generated Draft v2.4</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Last edited 14m ago</span>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn">Request Changes</button>
+                    <button class="btn btn-primary" style="background: var(--success);">Approve &amp; Finalize</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="inbox" class="view-container">
+            <div class="inbox-container">
+                <div class="inbox-list" id="inboxList"></div>
+                <div class="draft-preview">
+                    <div class="draft-header">
+                        <div>
+                            <h2 id="draftTitle" style="font-size: 1.1rem; margin-bottom: 0.25rem;">Draft Review: Liam Chen (P-1B)</h2>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">Submitted by AI Agent 4 mins ago &bull; <span style="color: var(--danger); font-weight: 600;">Due in 2 days</span></p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary">Accept</button>
+                            <button class="btn">Edit</button>
+                            <button class="btn" style="color: var(--danger);">Reject</button>
+                        </div>
+                    </div>
+                    <div class="draft-body">
+                        <p>The beneficiary, <span class="ai-annotation" data-comment="Check spelling against passport page 2">Liam Chen</span>, is an internationally recognized eSports strategist. Evidence provided in Exhibit A-4 demonstrates that the beneficiary has achieved a high level of accomplishment in the field of professional gaming, as evidenced by a rating that is <span class="ai-annotation" data-comment="Statistics sourced from Liquipedia Global Rankings">substantially above that ordinarily encountered</span>...</p>
+                        <p style="margin-top: 1.5rem;">Under 8 CFR 214.2(p)(4)(i)(B), the P-1B classification applies to an internationally recognized entertainment group. While Mr. Chen is an individual, his role as Head Coach for Team Vertex satisfies the requirement...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const columns = [
+            { id: 'intake', title: 'Intake' },
+            { id: 'docs', title: 'Docs Gathering' },
+            { id: 'draft', title: 'Petition Draft' },
+            { id: 'rfe', title: 'RFE Response' },
+            { id: 'approved', title: 'Approved' },
+            { id: 'denied', title: 'Denied' }
+        ];
+
+        const cases = [
+            { id: 1, name: 'Elena Rodriguez', type: 'O-1B', attorney: 'M. Thorne', days: 4, score: 94, stage: 'draft' },
+            { id: 2, name: 'Liam Chen', type: 'P-1B', attorney: 'S. Jaso', days: 12, score: 88, stage: 'intake' },
+            { id: 3, name: 'Suki Yamamoto', type: 'O-1B', attorney: 'M. Thorne', days: 2, score: 91, stage: 'docs' },
+            { id: 4, name: 'Dr. Aris Varma', type: 'O-1A', attorney: 'K. Patel', days: 45, score: 72, stage: 'rfe' },
+            { id: 5, name: 'Julia Steiner', type: 'O-1B', attorney: 'S. Jaso', days: 1, score: 98, stage: 'approved' },
+            { id: 6, name: 'Team Alpha', type: 'P-1', attorney: 'K. Patel', days: 8, score: 85, stage: 'docs' }
+        ];
+
+        const inboxItems = [
+            { id: 1, client: 'Liam Chen', type: 'P-1B', score: 88, urgency: 'high', time: '4m ago' },
+            { id: 2, client: 'Suki Yamamoto', type: 'O-1B', score: 91, urgency: 'medium', time: '1h ago' },
+            { id: 3, client: 'Rajiv Mehra', type: 'O-1A', score: 76, urgency: 'low', time: '3h ago' },
+            { id: 4, client: 'Sarah Jenkins', type: 'O-1B', score: 94, urgency: 'high', time: '5h ago' }
+        ];
+
+        function switchView(viewId, event) {
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            const titles = { pipeline: 'Case Pipeline', inbox: 'Review Queue', detail: 'Case Detail: Elena Rodriguez' };
+            document.getElementById('view-title').innerText = titles[viewId];
+        }
+
+        function renderKanban() {
+            const board = document.getElementById('kanbanBoard');
+            board.innerHTML = '';
+            columns.forEach(col => {
+                const colEl = document.createElement('div');
+                colEl.className = 'kanban-col';
+                colEl.innerHTML = `<div class="col-header"><span>${col.title}</span> <span>${cases.filter(c => c.stage === col.id).length}</span></div>`;
+                const listEl = document.createElement('div');
+                listEl.className = 'card-list';
+                listEl.id = col.id;
+                listEl.ondragover = (e) => e.preventDefault();
+                listEl.ondrop = (e) => handleDrop(e, col.id);
+                cases.filter(c => c.stage === col.id).forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'kanban-card';
+                    card.draggable = true;
+                    card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', c.id); card.classList.add('dragging'); };
+                    card.ondragend = () => card.classList.remove('dragging');
+                    card.innerHTML = `
+                        <div class="card-title">${c.name}</div>
+                        <span class="badge badge-visa">${c.type}</span>
+                        <div class="card-meta">
+                            <span>${c.attorney}</span>
+                            <span>&bull;</span>
+                            <span>${c.days}d in stage</span>
+                            <div class="ai-score">${c.score}%</div>
+                        </div>`;
+                    listEl.appendChild(card);
+                });
+                colEl.appendChild(listEl);
+                board.appendChild(colEl);
+            });
+        }
+
+        function handleDrop(e, newStage) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const item = cases.find(c => c.id == id);
+            if (item) { item.stage = newStage; renderKanban(); }
+        }
+
+        function renderInbox() {
+            const list = document.getElementById('inboxList');
+            list.innerHTML = '';
+            inboxItems.forEach((item, index) => {
+                const el = document.createElement('div');
+                el.className = `inbox-item ${index === 0 ? 'active' : ''}`;
+                el.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span class="badge badge-visa">${item.type}</span>
+                        <div class="urgency-dot" style="background: ${item.urgency === 'high' ? 'var(--danger)' : 'var(--warning)'}"></div>
+                    </div>
+                    <div style="font-weight: 600; font-size: 0.95rem;">${item.client}</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                        <span>AI Score: <b style="color: var(--accent)">${item.score}%</b></span>
+                        <span>${item.time}</span>
+                    </div>`;
+                el.onclick = () => {
+                    document.querySelectorAll('.inbox-item').forEach(i => i.classList.remove('active'));
+                    el.classList.add('active');
+                    document.getElementById('draftTitle').innerText = `Draft Review: ${item.client} (${item.type})`;
+                };
+                list.appendChild(el);
+            });
+        }
+
+        renderKanban();
+        renderInbox();
+    </script>
+</body>
+</html>

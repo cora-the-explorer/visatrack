@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpinVisa | Intelligence-Driven Immigration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #0a0f1e;
+            --sidebar-hover: rgba(99, 102, 241, 0.15);
+            --sidebar-active: #6366f1;
+            --bg-app: #f8fafc;
+            --bg-paper: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #6366f1;
+            --accent-violet: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --transition: all 150ms ease-in-out;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+        .top-gradient { height: 2px; width: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-violet)); position: fixed; top: 0; z-index: 100; }
+
+        .app-container { display: flex; flex: 1; overflow: hidden; margin-top: 2px; }
+        aside { width: 220px; background: var(--sidebar-bg); color: #94a3b8; display: flex; flex-direction: column; padding: 1.25rem 0.75rem; border-right: 1px solid rgba(255,255,255,0.05); }
+
+        .logo { padding: 0 0.75rem; color: white; font-weight: 700; font-size: 0.95rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 8px; letter-spacing: -0.02em; }
+        .logo-mark { width: 24px; height: 24px; background: linear-gradient(135deg, var(--accent), var(--accent-violet)); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 900; }
+
+        nav { flex: 1; }
+        .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: 999px; cursor: pointer; transition: var(--transition); margin-bottom: 4px; font-size: 0.85rem; font-weight: 500; }
+        .nav-item:hover { background: var(--sidebar-hover); color: white; }
+        .nav-item.active { background: var(--sidebar-active); color: white; }
+        .nav-link { display: flex; align-items: center; gap: 10px; }
+        .count-badge { font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 10px; opacity: 0.8; }
+
+        main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .topbar { height: 56px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; }
+        .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; }
+        .breadcrumb span { color: var(--text-muted); }
+        .breadcrumb b { color: var(--text-main); font-weight: 600; }
+
+        .topbar-right { display: flex; align-items: center; gap: 1.25rem; }
+        .icon-btn { cursor: pointer; color: var(--text-muted); position: relative; transition: var(--transition); }
+        .icon-btn:hover { color: var(--text-main); }
+        .notif-dot { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; position: absolute; top: -2px; right: -2px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 500; padding-left: 1.25rem; border-left: 1px solid var(--border); }
+        .avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #475569; }
+
+        .view-container { flex: 1; overflow-y: auto; display: none; }
+        .view-container.active { display: block; }
+
+        /* KANBAN */
+        .kanban-grid { display: grid; grid-template-columns: repeat(6, 280px); gap: 1rem; padding: 1.5rem; height: calc(100vh - 58px); overflow-x: auto; }
+        .kanban-col { display: flex; flex-direction: column; width: 280px; }
+        .col-header { padding: 0.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.025em; margin-bottom: 1rem; }
+
+        .kanban-card { background: white; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border); box-shadow: var(--shadow-sm); cursor: pointer; transition: var(--transition); position: relative; overflow: hidden; }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: #cbd5e1; }
+        .card-type-strip { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+        .card-title { font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; padding-left: 8px; }
+        .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; }
+        .attorney-init { width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; border: 1px solid var(--border); font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .progress-container { margin-top: 0.75rem; height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--accent); }
+
+        /* CASE DETAIL */
+        .hero-strip { background: white; padding: 2rem 3rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; }
+        .hero-title { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; }
+
+        .stepper { display: flex; padding: 2rem 3rem; gap: 2rem; background: #f8fafc; border-bottom: 1px solid var(--border); }
+        .step { flex: 1; position: relative; display: flex; flex-direction: column; gap: 8px; }
+        .step-circle { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); background: white; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+        .step.completed .step-circle { background: var(--accent); border-color: var(--accent); color: white; }
+        .step.active .step-circle { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .step::after { content: ''; position: absolute; top: 12px; left: 24px; width: calc(100% + 2rem - 24px); height: 2px; background: var(--border); z-index: 1; }
+        .step:last-child::after { display: none; }
+        .step.completed::after { background: var(--accent); }
+        .step-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+
+        .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; padding: 2rem 3rem; }
+        .meta-card { background: white; border: 1px solid var(--border); padding: 1.25rem; border-radius: 12px; transition: var(--transition); }
+        .meta-card:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+        .meta-card label { display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+        .meta-card div { font-weight: 600; font-size: 0.9rem; }
+
+        /* INBOX */
+        .inbox-view { display: flex; height: calc(100vh - 58px); }
+        .inbox-list { width: 340px; border-right: 1px solid var(--border); background: white; overflow-y: auto; }
+        .inbox-item { padding: 1.25rem 1.25rem 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; cursor: pointer; transition: var(--transition); position: relative; }
+        .inbox-item:hover { background: #f8fafc; }
+        .inbox-item.active { background: #f1f5f9; }
+        .urgency-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+
+        .ai-score-ring { width: 32px; height: 32px; position: relative; flex-shrink: 0; }
+        .ring-svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #e2e8f0; stroke-width: 3; }
+        .ring-fill { fill: none; stroke: var(--accent); stroke-width: 3; stroke-dasharray: 100; stroke-linecap: round; }
+
+        .draft-area { flex: 1; background: #e2e8f0; padding: 3rem; overflow-y: auto; display: flex; justify-content: center; }
+        .paper { background: white; width: 100%; max-width: 800px; min-height: 800px; padding: 4rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); font-family: 'Georgia', serif; line-height: 1.8; color: #334155; }
+        .paper-header { font-family: 'Inter', sans-serif; margin-bottom: 3rem; border-bottom: 2px solid var(--text-main); padding-bottom: 1rem; }
+
+        .badge { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+        .bg-indigo { background: #e0e7ff; color: #4338ca; }
+        .bg-violet { background: #f5f3ff; color: #6d28d9; }
+        .bg-emerald { background: #dcfce7; color: #15803d; }
+        .bg-blue { background: #dbeafe; color: #1e40af; }
+
+        .btn { padding: 0.5rem 1rem; font-size: 0.85rem; font-weight: 500; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; }
+        .btn:hover { background: #f8fafc; }
+        .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+        .btn-primary:hover { background: #4f46e5; }
+    </style>
+</head>
+<body>
+    <div class="top-gradient"></div>
+    <div class="app-container">
+        <aside>
+            <div class="logo">
+                <div class="logo-mark">S</div>
+                SpinVisa
+            </div>
+            <nav>
+                <div class="nav-item active" onclick="switchView('pipeline', this)">
+                    <div class="nav-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        Pipeline
+                    </div>
+                    <span class="count-badge">24</span>
+                </div>
+                <div class="nav-item" onclick="switchView('inbox', this)">
+                    <div class="nav-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+                        Inbox
+                    </div>
+                    <span class="count-badge" style="background: var(--danger)">4</span>
+                </div>
+                <div class="nav-item" onclick="switchView('detail', this)">
+                    <div class="nav-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        Active Case
+                    </div>
+                </div>
+            </nav>
+            <div class="nav-item" style="opacity: 0.5;">
+                <div class="nav-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Settings
+                </div>
+            </div>
+        </aside>
+
+        <main>
+            <header class="topbar">
+                <div class="breadcrumb">
+                    <span>SpinVisa</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <b id="breadcrumb-active">Pipeline</b>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                        Filter & Sort
+                    </button>
+                    <div class="icon-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <div class="notif-dot"></div>
+                    </div>
+                    <div class="user-profile">
+                        <span>Marcus Thorne</span>
+                        <div class="avatar">MT</div>
+                    </div>
+                </div>
+            </header>
+
+            <div id="pipeline" class="view-container active">
+                <div class="kanban-grid" id="kanbanBoard"></div>
+            </div>
+
+            <div id="detail" class="view-container">
+                <div style="overflow-y: auto; height: calc(100vh - 58px);">
+                    <div class="hero-strip">
+                        <div>
+                            <div style="display:flex; align-items:center; gap: 12px; margin-bottom: 0.5rem;">
+                                <span class="badge bg-indigo">O-1B Artist</span>
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">Case #77129</span>
+                            </div>
+                            <h1 class="hero-title">Elena Rodriguez</h1>
+                        </div>
+                        <div style="display:flex; gap: 0.75rem;">
+                            <button class="btn">Share Access</button>
+                            <button class="btn btn-primary">Submit to USCIS</button>
+                        </div>
+                    </div>
+                    <div class="stepper">
+                        <div class="step completed"><div class="step-circle">✓</div><div class="step-label">Intake</div></div>
+                        <div class="step completed"><div class="step-circle">✓</div><div class="step-label">Evidence</div></div>
+                        <div class="step active"><div class="step-circle">3</div><div class="step-label">Drafting</div></div>
+                        <div class="step"><div class="step-circle">4</div><div class="step-label">Review</div></div>
+                        <div class="step"><div class="step-circle">5</div><div class="step-label">Filed</div></div>
+                    </div>
+                    <div class="meta-grid">
+                        <div class="meta-card"><label>Petitioner</label><div>Rodriguez Studio Inc.</div></div>
+                        <div class="meta-card"><label>Field of Endeavor</label><div>Architectural Visualization</div></div>
+                        <div class="meta-card"><label>AI Confidence</label><div style="color: var(--accent-emerald)">94.2% Match</div></div>
+                        <div class="meta-card"><label>Next Deadline</label><div style="color: var(--danger)">Oct 24, 2023</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="inbox" class="view-container">
+                <div class="inbox-view">
+                    <div class="inbox-list" id="inboxList"></div>
+                    <div class="draft-area">
+                        <div class="paper">
+                            <div class="paper-header">
+                                <h3 style="font-size: 1.25rem; font-family: Inter, sans-serif; font-weight: 700;">MEMORANDUM OF SUPPORT</h3>
+                                <p style="font-size: 0.85rem; margin-top: 4px; font-family: Inter, sans-serif; color: var(--text-muted);">Classification: P-1B Internationally Recognized Entertainment Group</p>
+                            </div>
+                            <p>To the Director, <br><br> This petition is submitted by the Petitioner, Apex Gaming Collective, on behalf of the Beneficiary, <b>Liam Chen</b>. We seek to classify the Beneficiary as a P-1B nonimmigrant based on his internationally recognized achievements in the field of professional esports...</p>
+                            <p style="margin-top: 1.5rem;">The Beneficiary has been an essential member of "Team Vertex" for over three years. During this time, the group has achieved first-place finishes at the 2022 Seoul Invitational and the 2023 Global Masters in London...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const types = { 'O-1B': 'var(--accent)', 'P-1B': 'var(--accent-violet)', 'O-1A': 'var(--accent-blue)', 'P-1': 'var(--accent-emerald)' };
+        const cases = [
+            { id: 1, name: 'Elena Rodriguez', type: 'O-1B', att: 'MT', days: 22, stage: 'drafting' },
+            { id: 2, name: 'Liam Chen', type: 'P-1B', att: 'SJ', days: 5, stage: 'intake' },
+            { id: 3, name: 'Dr. Aris Varma', type: 'O-1A', att: 'KP', days: 28, stage: 'rfe' },
+            { id: 4, name: 'Suki Yamamoto', type: 'O-1B', att: 'MT', days: 14, stage: 'evidence' },
+            { id: 5, name: 'Team Alpha', type: 'P-1', att: 'KP', days: 2, stage: 'intake' },
+            { id: 6, name: 'Julia Steiner', type: 'O-1B', att: 'SJ', days: 1, stage: 'approved' }
+        ];
+        const columns = [
+            { id: 'intake', label: 'Intake' }, { id: 'evidence', label: 'Evidence' },
+            { id: 'drafting', label: 'Drafting' }, { id: 'rfe', label: 'RFE' },
+            { id: 'review', label: 'Review' }, { id: 'approved', label: 'Approved' }
+        ];
+        const inboxItems = [
+            { id: 101, name: 'Liam Chen', type: 'P-1B', score: 88, urgency: 'var(--danger)', init: 'LC' },
+            { id: 102, name: 'Suki Yamamoto', type: 'O-1B', score: 94, urgency: 'var(--warning)', init: 'SY' },
+            { id: 103, name: 'Rajiv Mehra', type: 'O-1A', score: 72, urgency: '#e2e8f0', init: 'RM' }
+        ];
+        function getBadgeClass(t) { return t==='O-1B'?'bg-indigo':t==='P-1B'?'bg-violet':t==='O-1A'?'bg-blue':'bg-emerald'; }
+        function switchView(viewId, el) {
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            el.classList.add('active');
+            const labels = { pipeline: 'Pipeline', inbox: 'Inbox', detail: 'Active Case' };
+            document.getElementById('breadcrumb-active').innerText = labels[viewId];
+        }
+        function renderKanban() {
+            const board = document.getElementById('kanbanBoard');
+            board.innerHTML = '';
+            columns.forEach(col => {
+                const colEl = document.createElement('div');
+                colEl.className = 'kanban-col';
+                const colCases = cases.filter(c => c.stage === col.id);
+                colEl.innerHTML = `<div class="col-header">${col.label} <span>${colCases.length}</span></div>`;
+                colCases.forEach(c => {
+                    const progress = Math.min((c.days / 30) * 100, 100);
+                    const card = document.createElement('div');
+                    card.className = 'kanban-card';
+                    card.innerHTML = `
+                        <div class="card-type-strip" style="background: ${types[c.type]}"></div>
+                        <div class="card-title">${c.name}</div>
+                        <span class="badge ${getBadgeClass(c.type)}">${c.type}</span>
+                        <div class="card-footer">
+                            <div style="font-size:0.7rem;color:var(--text-muted);font-weight:500;">${c.days}d in stage</div>
+                            <div class="attorney-init">${c.att}</div>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width:${progress}%;background:${progress>80?'var(--danger)':'var(--accent)'}"></div>
+                        </div>`;
+                    colEl.appendChild(card);
+                });
+                board.appendChild(colEl);
+            });
+        }
+        function renderInbox() {
+            const list = document.getElementById('inboxList');
+            list.innerHTML = '';
+            inboxItems.forEach(item => {
+                const el = document.createElement('div');
+                el.className = `inbox-item ${item.id===101?'active':''}`;
+                el.innerHTML = `
+                    <div class="urgency-bar" style="background:${item.urgency}"></div>
+                    <div class="avatar" style="width:36px;height:36px;background:#f1f5f9;flex-shrink:0;">${item.init}</div>
+                    <div style="flex:1">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <span class="badge ${getBadgeClass(item.type)}">${item.type}</span>
+                            <div class="ai-score-ring" style="position:relative;">
+                                <svg class="ring-svg" width="32" height="32" viewBox="0 0 36 36">
+                                    <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                    <path class="ring-fill" stroke-dasharray="${item.score},100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                </svg>
+                                <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">${item.score}</div>
+                            </div>
+                        </div>
+                        <div style="font-weight:600;font-size:0.85rem;">${item.name}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">AI Draft available for review</div>
+                    </div>`;
+                list.appendChild(el);
+            });
+        }
+        renderKanban();
+        renderInbox();
+    </script>
+</body>
+</html>
