@@ -1,8 +1,8 @@
 import type { Config } from 'tailwindcss';
-import { visa-trackPreset } from '@visa-track/ui/tailwind-preset';
+import { visaTrackPreset } from '@visa-track/ui/tailwind-preset';
 
 const config: Config = {
-  presets: [visa-trackPreset as Config],
+  presets: [visaTrackPreset as Config],
   content: [
     './src/**/*.{ts,tsx,mdx}',
     './app/**/*.{ts,tsx,mdx}',

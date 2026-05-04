@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
 
-export const visa-trackPreset: Partial<Config> = {
+export const visaTrackPreset: Partial<Config> = {
   darkMode: ['class'],
   theme: {
     container: {
@@ -66,4 +66,4 @@ export const visa-trackPreset: Partial<Config> = {
   plugins: [animate],
 };
 
-export default visa-trackPreset;
+export default visaTrackPreset;

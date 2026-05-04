@@ -2,11 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: [
-    '@spinvisa/ui',
-    '@spinvisa/db',
-    '@spinvisa/auth',
-    '@spinvisa/api-types',
-    '@spinvisa/observability',
+    '@visa-track/ui',
+    '@visa-track/db',
+    '@visa-track/auth',
+    '@visa-track/api-types',
+    '@visa-track/observability',
   ],
   typedRoutes: true,
 };
