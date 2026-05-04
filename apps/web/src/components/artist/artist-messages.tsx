@@ -47,13 +47,13 @@ export function ArtistMessages() {
   };
 
   return (
-    <div className="flex h-screen flex-col">
-      <div className="border-b border-slate-100 px-8 py-6">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Messages</h1>
-        <p className="mt-1 text-base text-slate-600">Direct line to your attorney.</p>
+    <div className="flex flex-1 flex-col min-h-0">
+      <div className="border-b border-slate-100 px-4 py-4 md:px-8 md:py-6">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Messages</h1>
+        <p className="mt-1 text-sm text-slate-600 md:text-base">Direct line to your attorney.</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
         <div className="mx-auto max-w-3xl space-y-4">
           {messages.map((m) => (
             <div
@@ -81,7 +81,7 @@ export function ArtistMessages() {
         </div>
       </div>
 
-      <form onSubmit={send} className="border-t border-slate-100 bg-white px-8 py-5">
+      <form onSubmit={send} className="border-t border-slate-100 bg-white px-4 py-3 md:px-8 md:py-5">
         <div className="mx-auto flex max-w-3xl items-end gap-3">
           <textarea
             value={draft}

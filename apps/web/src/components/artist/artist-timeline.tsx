@@ -32,12 +32,12 @@ export function ArtistTimeline() {
   });
 
   if (isLoading) {
-    return <div className="mx-auto max-w-3xl px-8 py-16 text-slate-500">Loading…</div>;
+    return <div className="mx-auto max-w-3xl px-4 py-10 text-slate-500 md:px-8 md:py-16">Loading…</div>;
   }
 
   if (!myCase) {
     return (
-      <div className="mx-auto max-w-3xl px-8 py-16 text-slate-500">
+      <div className="mx-auto max-w-3xl px-4 py-10 text-slate-500 md:px-8 md:py-16">
         Your timeline will appear here once your case is created.
       </div>
     );
@@ -131,9 +131,9 @@ export function ArtistTimeline() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-12">
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900">Timeline</h1>
+    <div className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-12">
+      <div className="mb-8 md:mb-10">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">Timeline</h1>
         <p className="mt-2 text-base text-slate-600">
           Everything that's happened on your case, from intake to decision.
         </p>

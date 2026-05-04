@@ -78,9 +78,9 @@ export function ArtistDocuments() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-12">
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900">Documents</h1>
+    <div className="mx-auto max-w-4xl px-4 py-6 md:px-8 md:py-12">
+      <div className="mb-8 md:mb-10">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">Documents</h1>
         <p className="mt-2 text-base text-slate-600">
           Send your attorney the files we need to build your petition. We accept PDFs, images,
           and Word docs up to 50MB.
@@ -121,7 +121,7 @@ export function ArtistDocuments() {
       <section className="mb-10">
         <h2 className="mb-4 text-base font-semibold text-slate-700">Upload a file</h2>
         <div
-          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center transition hover:border-indigo-300 hover:bg-indigo-50/30"
+          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-white p-8 text-center transition hover:border-indigo-300 hover:bg-indigo-50/30 md:p-12"
           onClick={() => fileRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {

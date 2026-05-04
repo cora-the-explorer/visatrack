@@ -9,7 +9,7 @@ export default function ArtistLayout({ children }: { children: ReactNode }) {
     <ToastProvider>
       <div className="flex min-h-screen bg-white text-slate-900">
         <ArtistSidebar />
-        <main className="flex-1">{children}</main>
+        <main className="flex flex-1 flex-col pt-14 pb-16 md:pt-0 md:pb-0">{children}</main>
       </div>
     </ToastProvider>
   );

@@ -33,7 +33,7 @@ export function ArtistDashboard() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-3xl px-8 py-16 text-slate-500">Loading your case…</div>
+      <div className="mx-auto max-w-3xl px-4 py-10 text-slate-500 md:px-8 md:py-16">Loading your case…</div>
     );
   }
 
@@ -41,8 +41,8 @@ export function ArtistDashboard() {
 
   if (!myCase) {
     return (
-      <div className="mx-auto max-w-3xl px-8 py-16">
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-8 md:px-8 md:py-16">
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center md:p-12">
           <Sparkles className="mx-auto mb-3 h-8 w-8 text-indigo-400" />
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Welcome to your portal
@@ -60,25 +60,25 @@ export function ArtistDashboard() {
   const subject = myCase.artistName ?? myCase.title;
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-12">
-      <div className="mb-10">
+    <div className="mx-auto max-w-4xl px-4 py-6 md:px-8 md:py-12">
+      <div className="mb-8 md:mb-10">
         <p className="text-sm font-medium uppercase tracking-wider text-indigo-600">
           {myCase.visaType} Petition
         </p>
-        <h1 className="mt-1 text-4xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
           Hello, {subject.split(' ')[0]}
         </h1>
-        <p className="mt-3 max-w-xl text-lg text-slate-600">
+        <p className="mt-2 max-w-xl text-base text-slate-600 md:mt-3 md:text-lg">
           Here's where your case stands today. We'll let you know whenever there's something
           new for you to review or do.
         </p>
       </div>
 
-      <section className="mb-10 rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
+      <section className="mb-8 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm md:mb-10 md:p-8">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
           Current Step
         </div>
-        <h2 className="text-2xl font-semibold text-slate-900">
+        <h2 className="text-xl font-semibold text-slate-900 md:text-2xl">
           {STAGES[currentStep]?.label ?? 'In Progress'}
         </h2>
         <p className="mt-2 text-base text-slate-600">{STAGES[currentStep]?.plain}</p>
@@ -97,8 +97,8 @@ export function ArtistDashboard() {
         </div>
       </section>
 
-      <section className="mb-10">
-        <h2 className="mb-5 text-base font-semibold text-slate-700">Your Journey</h2>
+      <section className="mb-8 md:mb-10">
+        <h2 className="mb-4 text-base font-semibold text-slate-700 md:mb-5">Your Journey</h2>
         <ol className="space-y-3">
           {STAGES.map((s, i) => (
             <StageRow
