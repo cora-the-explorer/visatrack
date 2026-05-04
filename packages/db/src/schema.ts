@@ -1,4 +1,4 @@
-// SpinVisa core schema — multi-tenant.
+// Visa Track core schema — multi-tenant.
 // pgvector extension required: `CREATE EXTENSION IF NOT EXISTS vector;`
 import { sql } from 'drizzle-orm';
 import {

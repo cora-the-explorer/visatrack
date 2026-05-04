@@ -1,4 +1,4 @@
-import type { AgentName } from '@spinvisa/api-types';
+import type { AgentName } from '@visa-track/api-types';
 import type { AgentDefinition, AgentInput, AgentResult } from './types';
 import { intakeAgent } from './intake';
 import { evidenceCuratorAgent } from './evidence-curator';

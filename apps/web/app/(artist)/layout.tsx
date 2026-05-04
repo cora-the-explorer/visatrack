@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ToastProvider } from '@spinvisa/ui';
+import { ToastProvider } from '@visa-track/ui';
 import { ArtistSidebar } from '@/components/layout/artist-sidebar';
 
 export const metadata = { title: 'Artist Portal' };

@@ -1,5 +1,5 @@
 import { Topbar } from '@/components/layout/topbar';
-import { Card, CardContent } from '@spinvisa/ui';
+import { Card, CardContent } from '@visa-track/ui';
 
 export const metadata = { title: 'Forms' };
 

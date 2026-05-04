@@ -13,14 +13,14 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@spinvisa/db": ["../../packages/db/src/index.ts"],
-      "@spinvisa/db/*": ["../../packages/db/src/*"],
-      "@spinvisa/auth": ["../../packages/auth/src/index.ts"],
-      "@spinvisa/auth/*": ["../../packages/auth/src/*"],
-      "@spinvisa/ui": ["../../packages/ui/src/index.ts"],
-      "@spinvisa/ui/*": ["../../packages/ui/src/*"],
-      "@spinvisa/api-types": ["../../packages/api-types/src/index.ts"],
-      "@spinvisa/observability": ["../../packages/observability/src/index.ts"]
+      "@visa-track/db": ["../../packages/db/src/index.ts"],
+      "@visa-track/db/*": ["../../packages/db/src/*"],
+      "@visa-track/auth": ["../../packages/auth/src/index.ts"],
+      "@visa-track/auth/*": ["../../packages/auth/src/*"],
+      "@visa-track/ui": ["../../packages/ui/src/index.ts"],
+      "@visa-track/ui/*": ["../../packages/ui/src/*"],
+      "@visa-track/api-types": ["../../packages/api-types/src/index.ts"],
+      "@visa-track/observability": ["../../packages/observability/src/index.ts"]
     }
   },
   "include": [

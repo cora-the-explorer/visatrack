@@ -1,7 +1,7 @@
 import { defineConfig } from '@trigger.dev/sdk/v3';
 
 export default defineConfig({
-  project: process.env.TRIGGER_PROJECT_ID ?? 'spinvisa',
+  project: process.env.TRIGGER_PROJECT_ID ?? 'visa-track',
   runtime: 'node',
   logLevel: 'info',
   maxDuration: 3600,

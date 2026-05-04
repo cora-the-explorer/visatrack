@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Badge, useToast } from '@spinvisa/ui';
+import { Badge, useToast } from '@visa-track/ui';
 import { trpc } from '@/lib/trpc';
 
 const AGENT_LABEL: Record<string, string> = {

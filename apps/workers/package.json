@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "@trigger.dev/sdk": "^3.3.0",
-    "@spinvisa/agents": "workspace:*",
-    "@spinvisa/db": "workspace:*",
-    "@spinvisa/observability": "workspace:*",
+    "@visa-track/agents": "workspace:*",
+    "@visa-track/db": "workspace:*",
+    "@visa-track/observability": "workspace:*",
     "zod": "^3.24.1"
   },
   "devDependencies": {

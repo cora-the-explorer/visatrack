@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { CheckCircle2, FileText, Loader2, Upload } from 'lucide-react';
-import { Badge, useToast } from '@spinvisa/ui';
+import { Badge, useToast } from '@visa-track/ui';
 import { trpc } from '@/lib/trpc';
 
 function fmtDate(d: Date | string | null | undefined): string {

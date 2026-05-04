@@ -1,4 +1,4 @@
-import '@spinvisa/ui/styles.css';
+import '@visa-track/ui/styles.css';
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Providers } from '@/components/layout/providers';
@@ -16,7 +16,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'SpinVisa', template: '%s · SpinVisa' },
+  title: { default: 'Visa Track', template: '%s · Visa Track' },
   description: 'AI-native immigration case management for O-1B / P-1B firms.',
 };
 

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FileText, Inbox, LayoutGrid, Settings } from 'lucide-react';
-import { cn } from '@spinvisa/ui';
+import { cn } from '@visa-track/ui';
 
 type NavItem = {
   href: string;
@@ -37,7 +37,7 @@ export function Sidebar() {
         <span className="flex h-6 w-6 items-center justify-center rounded-[4px] bg-gradient-to-br from-indigo-500 to-violet-500 text-[14px] font-black leading-none text-white">
           S
         </span>
-        SpinVisa
+        Visa Track
       </Link>
 
       <nav className="flex-1">

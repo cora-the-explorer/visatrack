@@ -130,7 +130,7 @@ function Header() {
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-violet-500 text-sm font-black text-white">
             S
           </span>
-          <span className="text-base font-semibold tracking-tight">SpinVisa</span>
+          <span className="text-base font-semibold tracking-tight">Visa Track</span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm text-slate-600 md:flex">
           <a href="#features" className="hover:text-slate-900">
@@ -179,7 +179,7 @@ function Hero() {
           immigration
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600">
-          SpinVisa drafts petitions, gathers evidence, and runs your client portal — so your
+          Visa Track drafts petitions, gathers evidence, and runs your client portal — so your
           attorneys spend their hours on judgment, not formatting.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -441,7 +441,7 @@ function CTA() {
           Stop drafting petitions by hand
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-indigo-100">
-          Try SpinVisa free for 14 days. Set up your first case in under 10 minutes.
+          Try Visa Track free for 14 days. Set up your first case in under 10 minutes.
         </p>
         <Link
           href="/login"
@@ -463,7 +463,7 @@ function Footer() {
           <span className="flex h-5 w-5 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-violet-500 text-[10px] font-black text-white">
             S
           </span>
-          © {new Date().getFullYear()} SpinVisa, Inc. All rights reserved.
+          © {new Date().getFullYear()} Visa Track, Inc. All rights reserved.
         </div>
         <div className="flex gap-6 text-sm text-slate-500">
           <a href="#" className="hover:text-slate-900">

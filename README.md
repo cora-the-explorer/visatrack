@@ -1,4 +1,4 @@
-# SpinVisa Firm Console
+# Visa Track Firm Console
 
 Multi-tenant SaaS for immigration law firms to manage O-1B / P-1B visa cases end-to-end.
 

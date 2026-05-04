@@ -1,6 +1,6 @@
-name: spinvisa
+name: visa-track
 runtime:
   name: nodejs
   options:
     packagemanager: pnpm
-description: SpinVisa cloud infrastructure (Neon, Vercel, Trigger.dev, WorkOS, R2)
+description: Visa Track cloud infrastructure (Neon, Vercel, Trigger.dev, WorkOS, R2)

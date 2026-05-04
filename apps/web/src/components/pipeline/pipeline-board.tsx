@@ -14,10 +14,10 @@ import {
 } from '@dnd-kit/core';
 import { Briefcase } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { KanbanCard } from '@spinvisa/ui';
+import { KanbanCard } from '@visa-track/ui';
 import { trpc } from '@/lib/trpc';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
-import type { CaseStatus } from '@spinvisa/api-types';
+import type { CaseStatus } from '@visa-track/api-types';
 
 type StageId = 'intake' | 'docs' | 'draft' | 'rfe' | 'approved' | 'denied';
 

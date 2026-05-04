@@ -1,6 +1,6 @@
 import { trace, type Span, type Tracer } from '@opentelemetry/api';
 
-export const tracer: Tracer = trace.getTracer('spinvisa', '0.1.0');
+export const tracer: Tracer = trace.getTracer('visa-track', '0.1.0');
 
 export async function withSpan<T>(
   name: string,

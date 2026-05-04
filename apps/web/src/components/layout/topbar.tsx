@@ -15,7 +15,7 @@ export function Topbar({
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6">
       <div className="flex items-center gap-2 text-[0.85rem] font-medium">
-        <span className="text-slate-500">SpinVisa</span>
+        <span className="text-slate-500">Visa Track</span>
         <ChevronRight className="h-3 w-3 stroke-[2.5] text-slate-400" />
         <b className="font-semibold text-slate-900">{title}</b>
       </div>

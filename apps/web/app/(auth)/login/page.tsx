@@ -13,7 +13,7 @@ export default function LoginPage() {
     e?.preventDefault();
     setSubmitting(true);
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('spinvisa_authed', '1');
+      window.localStorage.setItem('visa-track_authed', '1');
     }
     setTimeout(() => router.push('/pipeline'), 280);
   };
@@ -36,7 +36,7 @@ export default function LoginPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500 text-lg font-black text-white shadow-lg shadow-indigo-500/30">
               S
             </span>
-            SpinVisa
+            Visa Track
           </div>
           <p className="text-sm text-slate-400">
             AI-powered immigration for extraordinary talent

@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { Check, CheckCircle2, Download, Loader2 } from 'lucide-react';
-import { Badge, TimelineItem, cn, useToast, type TimelineStatus } from '@spinvisa/ui';
+import { Badge, TimelineItem, cn, useToast, type TimelineStatus } from '@visa-track/ui';
 import { Topbar } from '@/components/layout/topbar';
 import { trpc } from '@/lib/trpc';
-import type { CaseStatus } from '@spinvisa/api-types';
+import type { CaseStatus } from '@visa-track/api-types';
 
 const TABS = ['Overview', 'Documents', 'Notes', 'Activity'] as const;
 type Tab = (typeof TABS)[number];

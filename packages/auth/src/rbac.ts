@@ -1,4 +1,4 @@
-// Role-based access control for SpinVisa.
+// Role-based access control for Visa Track.
 
 export type Role = 'owner' | 'attorney' | 'paralegal' | 'analyst' | 'viewer';
 

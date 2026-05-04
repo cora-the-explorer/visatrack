@@ -1,1 +1,1 @@
-export { cn } from '@spinvisa/ui';
+export { cn } from '@visa-track/ui';

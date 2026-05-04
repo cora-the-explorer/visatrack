@@ -1,4 +1,4 @@
-import type { AgentName } from '@spinvisa/api-types';
+import type { AgentName } from '@visa-track/api-types';
 
 export interface AgentInput {
   tenantId: string;

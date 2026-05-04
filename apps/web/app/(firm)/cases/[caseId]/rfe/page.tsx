@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@spinvisa/ui';
+import { Card, CardContent } from '@visa-track/ui';
 
 export default function CaseRfePage() {
   return (

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@spinvisa/ui';
+import { cn } from '@visa-track/ui';
 
 const TABS = [
   { slug: '', label: 'Overview' },

@@ -11,7 +11,7 @@ function getConnectionUrl(): string {
   if (process.env.NODE_ENV === 'production' && !process.env.SKIP_DB_CHECK) {
     throw new Error('DATABASE_URL is required in production');
   }
-  return 'postgresql://localhost:5432/spinvisa_dev';
+  return 'postgresql://localhost:5432/visa_track_dev';
 }
 
 function getDb(): PostgresJsDatabase<typeof schema> {

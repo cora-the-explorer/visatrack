@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ToastProvider } from '@spinvisa/ui';
+import { ToastProvider } from '@visa-track/ui';
 import { Sidebar } from '@/components/layout/sidebar';
 
 export default function FirmLayout({ children }: { children: ReactNode }) {

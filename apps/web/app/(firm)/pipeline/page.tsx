@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Topbar } from '@/components/layout/topbar';
 import { PipelineBoard } from '@/components/pipeline/pipeline-board';
-import { Button } from '@spinvisa/ui';
+import { Button } from '@visa-track/ui';
 
 export const metadata = { title: 'Pipeline' };
 

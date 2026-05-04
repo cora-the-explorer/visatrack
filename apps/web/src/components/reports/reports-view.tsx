@@ -1,7 +1,7 @@
 'use client';
 
 import { trpc } from '@/lib/trpc';
-import { Card, CardContent } from '@spinvisa/ui';
+import { Card, CardContent } from '@visa-track/ui';
 import { CheckCircle2, FileText, TrendingUp, XCircle } from 'lucide-react';
 
 const STATUS_LABEL: Record<string, string> = {

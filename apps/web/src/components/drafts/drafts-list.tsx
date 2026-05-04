@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
-import { Badge, Button, Card, CardContent } from '@spinvisa/ui';
+import { Badge, Button, Card, CardContent } from '@visa-track/ui';
 import { trpc } from '@/lib/trpc';
 
 function fmtDate(d: Date | string | null | undefined): string {

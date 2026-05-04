@@ -7,7 +7,7 @@ import {
   schema,
   createSignedUploadUrl,
   getDocumentUrl,
-} from '@spinvisa/db';
+} from '@visa-track/db';
 import { protectedProcedure, router } from '../init';
 
 const { documents, auditLog } = schema;

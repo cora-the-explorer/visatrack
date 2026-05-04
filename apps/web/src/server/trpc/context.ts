@@ -1,6 +1,6 @@
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
-import type { Session } from '@spinvisa/auth';
-import { db, type DB } from '@spinvisa/db';
+import type { Session } from '@visa-track/auth';
+import { db, type DB } from '@visa-track/db';
 
 export interface TRPCContext {
   session: Session | null;
@@ -15,7 +15,7 @@ function devSession(): Session {
   return {
     userId: DEV_USER_ID,
     tenantId: DEV_TENANT_ID,
-    email: 'dev@spinvisa.local',
+    email: 'dev@visa-track.local',
     fullName: 'Dev User',
     role: 'owner',
   };

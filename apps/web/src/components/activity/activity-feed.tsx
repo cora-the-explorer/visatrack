@@ -1,5 +1,5 @@
 import { Activity, Bot, CheckCircle2, Clock } from 'lucide-react';
-import { Badge } from '@spinvisa/ui';
+import { Badge } from '@visa-track/ui';
 
 interface ActivityItem {
   id: string;

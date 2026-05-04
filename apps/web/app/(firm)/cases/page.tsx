@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { Topbar } from '@/components/layout/topbar';
-import { Button } from '@spinvisa/ui';
+import { Button } from '@visa-track/ui';
 import { CasesList } from '@/components/case/cases-list';
 
 export const metadata = { title: 'Cases' };

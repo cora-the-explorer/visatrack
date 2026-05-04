@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { createCaseSchema, pipelineQuerySchema, updateCaseSchema } from '@spinvisa/api-types';
-import { alias, and, desc, eq, schema, sql } from '@spinvisa/db';
+import { createCaseSchema, pipelineQuerySchema, updateCaseSchema } from '@visa-track/api-types';
+import { alias, and, desc, eq, schema, sql } from '@visa-track/db';
 import { protectedProcedure, router } from '../init';
 
 const { cases, artists, sponsors, users, auditLog } = schema;

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Calendar, FileText, Home, MessageSquare } from 'lucide-react';
-import { cn } from '@spinvisa/ui';
+import { cn } from '@visa-track/ui';
 
 const NAV = [
   { href: '/portal/dashboard', label: 'My Case', icon: Home },
@@ -22,7 +22,7 @@ export function ArtistSidebar() {
         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-violet-500 text-sm font-black text-white">
           S
         </span>
-        <span className="text-base font-semibold tracking-tight text-slate-900">SpinVisa</span>
+        <span className="text-base font-semibold tracking-tight text-slate-900">Visa Track</span>
       </Link>
 
       <div className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">

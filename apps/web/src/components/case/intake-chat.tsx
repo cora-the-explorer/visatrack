@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc';
-import type { VisaType } from '@spinvisa/api-types';
+import type { VisaType } from '@visa-track/api-types';
 import {
   AlertTriangle,
   ArrowRight,
@@ -26,7 +26,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import { cn } from '@spinvisa/ui';
+import { cn } from '@visa-track/ui';
 
 type ApplicantType = 'individual' | 'group';
 
@@ -399,7 +399,7 @@ export function IntakeChatWizard() {
       {
         id: newMsgId(),
         role: 'bot',
-        text: "Hi! I'm SpinVisa AI. I'll help you set up this case in a few minutes — just answer as we go.",
+        text: "Hi! I'm Visa Track AI. I'll help you set up this case in a few minutes — just answer as we go.",
       },
       { id: newMsgId(), role: 'bot', text: resolvePrompt(first, INITIAL_FORM) },
     ]);
@@ -912,7 +912,7 @@ function ScanStep({
         <div>
           <h2 className="text-lg font-semibold text-slate-800">AI evidence gathering</h2>
           <p className="text-sm text-slate-500">
-            SpinVisa AI is collecting and packaging evidence in real time.
+            Visa Track AI is collecting and packaging evidence in real time.
           </p>
         </div>
       </div>

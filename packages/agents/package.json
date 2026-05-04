@@ -1,5 +1,5 @@
 {
-  "name": "@spinvisa/agents",
+  "name": "@visa-track/agents",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -17,9 +17,9 @@
     "@langchain/core": "^0.3.27",
     "@langchain/langgraph": "^0.2.36",
     "zod": "^3.24.1",
-    "@spinvisa/db": "workspace:*",
-    "@spinvisa/rag": "workspace:*",
-    "@spinvisa/api-types": "workspace:*"
+    "@visa-track/db": "workspace:*",
+    "@visa-track/rag": "workspace:*",
+    "@visa-track/api-types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

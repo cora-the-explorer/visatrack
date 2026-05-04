@@ -1,4 +1,4 @@
-# SpinVisa architecture
+# Visa Track architecture
 
 ## High-level
 

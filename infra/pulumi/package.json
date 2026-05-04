@@ -1,5 +1,5 @@
 {
-  "name": "@spinvisa/infra",
+  "name": "@visa-track/infra",
   "version": "0.1.0",
   "private": true,
   "main": "index.ts",

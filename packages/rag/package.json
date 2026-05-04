@@ -1,5 +1,5 @@
 {
-  "name": "@spinvisa/rag",
+  "name": "@visa-track/rag",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
   "dependencies": {
     "voyageai": "^0.0.4",
     "drizzle-orm": "^0.38.3",
-    "@spinvisa/db": "workspace:*"
+    "@visa-track/db": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { agentNameSchema, gateDecisionSchema } from '@spinvisa/api-types';
-import { and, desc, eq, schema } from '@spinvisa/db';
+import { agentNameSchema, gateDecisionSchema } from '@visa-track/api-types';
+import { and, desc, eq, schema } from '@visa-track/db';
 import { protectedProcedure, router } from '../init';
 
 const { agentRuns, gateActions, auditLog, cases } = schema;

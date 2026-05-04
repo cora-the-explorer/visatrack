@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, ExternalLink, Loader2, X } from 'lucide-react';
-import { Badge, Button, useToast } from '@spinvisa/ui';
+import { Badge, Button, useToast } from '@visa-track/ui';
 import { trpc } from '@/lib/trpc';
 
 const STATUS_VARIANT: Record<

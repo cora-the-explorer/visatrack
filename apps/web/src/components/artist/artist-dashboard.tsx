@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
-import { cn } from '@spinvisa/ui';
+import { cn } from '@visa-track/ui';
 
 const STAGES = [
   { key: 'intake', label: 'Intake', plain: 'We collect your basic info.' },

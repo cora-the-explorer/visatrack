@@ -1,6 +1,6 @@
 import { task } from '@trigger.dev/sdk/v3';
 import { z } from 'zod';
-import { db, eq, schema } from '@spinvisa/db';
+import { db, eq, schema } from '@visa-track/db';
 import {
   intakeAgent,
   evidenceCuratorAgent,
@@ -9,7 +9,7 @@ import {
   rfeResponderAgent,
   qaReviewerAgent,
   type AgentDefinition,
-} from '@spinvisa/agents';
+} from '@visa-track/agents';
 
 const { agentRuns, auditLog } = schema;
 

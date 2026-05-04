@@ -1,5 +1,5 @@
 {
-  "name": "@spinvisa/tests-evals",
+  "name": "@visa-track/tests-evals",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@spinvisa/agents": "workspace:*"
+    "@visa-track/agents": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^2.1.8",

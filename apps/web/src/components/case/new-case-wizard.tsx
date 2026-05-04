@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc';
-import type { VisaType as ApiVisaType } from '@spinvisa/api-types';
+import type { VisaType as ApiVisaType } from '@visa-track/api-types';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -34,7 +34,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { cn } from '@spinvisa/ui';
+import { cn } from '@visa-track/ui';
 
 type ApplicantType = 'individual' | 'group';
 type VisaType = 'O-1B' | 'P-1B' | 'O-1A' | 'P-3';
@@ -674,7 +674,7 @@ function IndividualClientFields({
             />
           </div>
           <p className="mt-1.5 text-xs text-slate-500">
-            Used by SpinVisa AI to gather evidence automatically.
+            Used by Visa Track AI to gather evidence automatically.
           </p>
         </Field>
       </div>
@@ -1235,7 +1235,7 @@ function P1bInfoModal({ onClose }: { onClose: () => void }) {
           <section>
             <h4 className="mb-1 font-semibold text-slate-800">The 75% / 1-year rule</h4>
             <p className="text-slate-600">
-              Per <span className="font-mono text-xs">8 CFR 214.2(p)(4)</span>, at least 75% of the group's members must have had a sustained and substantial relationship with the group for at least 1 year. SpinVisa verifies this from member tenure on Step 1.
+              Per <span className="font-mono text-xs">8 CFR 214.2(p)(4)</span>, at least 75% of the group's members must have had a sustained and substantial relationship with the group for at least 1 year. Visa Track verifies this from member tenure on Step 1.
             </p>
           </section>
           <section>
@@ -1465,7 +1465,7 @@ function StepEvidenceScan({
         <div>
           <h2 className="text-lg font-semibold text-slate-800">AI evidence gathering</h2>
           <p className="text-sm text-slate-500">
-            SpinVisa AI is collecting and packaging evidence in real time.
+            Visa Track AI is collecting and packaging evidence in real time.
           </p>
         </div>
       </div>

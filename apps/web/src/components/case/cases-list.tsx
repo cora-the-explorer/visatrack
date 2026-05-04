@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Badge, Card, CardContent } from '@spinvisa/ui';
+import { Badge, Card, CardContent } from '@visa-track/ui';
 import { trpc } from '@/lib/trpc';
 
 export function CasesList() {
