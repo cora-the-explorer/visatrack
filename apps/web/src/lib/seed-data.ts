@@ -1,16 +1,19 @@
 // Deterministic seed used both by the auto-seeder and packages/db/src/seed-marketplace.ts.
-// v2 claim model: 3 approved firms + 5 cases that exercise every claim state.
+// v3 audit funnel: 3 approved firms + 10 cases covering every audit + claim state.
 import { randomUUID } from 'node:crypto';
 import { generateEvidence, scoreEvidence, criteriaCoverage } from './mock-evidence';
 import {
   unlockFeeCentsForCase,
   type ArtistAccount,
+  type ArtistAudit,
   type ArtistCase,
+  type AuditAddon,
   type FirmProfile,
   type FirmClaim,
   type FirmScore,
   type StoreShape,
 } from './store';
+import { PRICING, AUDIT_WINDOW_MS } from './pricing';
 
 const fixedIds = {
   firmA: '11111111-1111-4111-8111-111111111111',
@@ -21,19 +24,37 @@ const fixedIds = {
   artist3: 'a3333333-3333-4333-8333-333333333333',
   artist4: 'a4444444-4444-4444-8444-444444444444',
   artist5: 'a5555555-5555-4555-8555-555555555555',
+  artist6: 'a6666666-6666-4666-8666-666666666666',
+  artist7: 'a7777777-7777-4777-8777-777777777777',
+  artist8: 'a8888888-8888-4888-8888-888888888888',
+  artist9: 'a9999999-9999-4999-8999-999999999999',
+  artist10: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   case1: 'c1111111-1111-4111-8111-111111111111',
   case2: 'c2222222-2222-4222-8222-222222222222',
   case3: 'c3333333-3333-4333-8333-333333333333',
   case4: 'c4444444-4444-4444-8444-444444444444',
   case5: 'c5555555-5555-4555-8555-555555555555',
+  case6: 'c6666666-6666-4666-8666-666666666666',
+  case7: 'c7777777-7777-4777-8777-777777777777',
+  case8: 'c8888888-8888-4888-8888-888888888888',
+  case9: 'c9999999-9999-4999-8999-999999999999',
+  case10: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
   claim1: 'cl111111-1111-4111-8111-111111111111',
   claim4: 'cl444444-4444-4444-8444-444444444444',
   claim5: 'cl555555-5555-4555-8555-555555555555',
+  audit1: 'ad111111-1111-4111-8111-111111111111',
+  audit2: 'ad222222-2222-4222-8222-222222222222',
+  audit4: 'ad444444-4444-4444-8444-444444444444',
+  audit5: 'ad555555-5555-4555-8555-555555555555',
+  audit8: 'ad888888-8888-4888-8888-888888888888',
+  audit9: 'ad999999-9999-4999-8999-999999999999',
+  audit10: 'adaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
 };
 
 const NOW = new Date('2026-05-04T12:00:00Z').toISOString();
 const MS_DAY = 86_400_000;
 const offset = (days: number) => new Date(Date.parse(NOW) + days * MS_DAY).toISOString();
+const hoursAgo = (h: number) => new Date(Date.parse(NOW) - h * 60 * 60 * 1000).toISOString();
 
 export function buildSeed(): StoreShape {
   const firms: FirmProfile[] = [
@@ -138,6 +159,56 @@ export function buildSeed(): StoreShape {
       basedIn: 'Mumbai',
       createdAt: offset(-1),
     },
+    {
+      id: fixedIds.artist6,
+      email: 'demo+yuki@visatrack.test',
+      legalName: 'Yuki Hoshino',
+      stageName: 'HOSHi',
+      phone: '+81 80 1234 5678',
+      citizenship: 'Japan',
+      basedIn: 'Tokyo',
+      createdAt: offset(0),
+    },
+    {
+      id: fixedIds.artist7,
+      email: 'demo+rafa@visatrack.test',
+      legalName: 'Rafa Mendes',
+      stageName: 'RAFA·M',
+      phone: '+55 11 9 8888 7777',
+      citizenship: 'Brazil',
+      basedIn: 'São Paulo',
+      createdAt: offset(-2),
+    },
+    {
+      id: fixedIds.artist8,
+      email: 'demo+sasha@visatrack.test',
+      legalName: 'Sasha Volkov',
+      stageName: 'V Λ R',
+      phone: '+49 30 1234567',
+      citizenship: 'Ukraine',
+      basedIn: 'Berlin',
+      createdAt: offset(-7),
+    },
+    {
+      id: fixedIds.artist9,
+      email: 'demo+chen@visatrack.test',
+      legalName: 'Chen Wei',
+      stageName: 'WEi.',
+      phone: '+852 9876 5432',
+      citizenship: 'China',
+      basedIn: 'Hong Kong',
+      createdAt: offset(-1),
+    },
+    {
+      id: fixedIds.artist10,
+      email: 'demo+isla@visatrack.test',
+      legalName: 'Isla Carrington',
+      stageName: 'ISLA',
+      phone: '+44 7700 900333',
+      citizenship: 'United Kingdom',
+      basedIn: 'London',
+      createdAt: offset(-1),
+    },
   ];
 
   const intakeBase = (overrides: Record<string, string>): Record<string, string> => ({
@@ -234,7 +305,7 @@ export function buildSeed(): StoreShape {
       updatedAt: offset(-1),
     },
     {
-      // Case 3 — Dossier ready (pre-list)
+      // Case 3 — Dossier preview, has not yet purchased an audit. Listing is gated.
       id: fixedIds.case3,
       artistId: fixedIds.artist3,
       visaType: 'O-1B',
@@ -250,9 +321,10 @@ export function buildSeed(): StoreShape {
       evidenceData: generateEvidence(fixedIds.case3, 'ame.studio', 'Beauty', 'YouTube'),
       evidenceScore: scoreEvidence(fixedIds.case3),
       criteriaCoverage: criteriaCoverage(fixedIds.case3),
-      status: 'dossier_ready',
-      createdAt: offset(-6),
-      updatedAt: offset(-6),
+      // Mid-window: created ~12h ago so the countdown shows ~36h remaining.
+      status: 'dossier_preview',
+      createdAt: hoursAgo(12),
+      updatedAt: hoursAgo(12),
     },
     {
       // Case 4 — Engaged: firm C claimed and logged engagement (within window)
@@ -304,6 +376,116 @@ export function buildSeed(): StoreShape {
       createdAt: offset(-22),
       updatedAt: offset(-1),
     },
+    {
+      // Case 6 — Fresh dossier preview (just minted). Should show ~47h remaining.
+      id: fixedIds.case6,
+      artistId: fixedIds.artist6,
+      visaType: 'O-1B',
+      intakeData: intakeBase({
+        legal_name: 'Yuki Hoshino',
+        stage_name: 'HOSHi',
+        email: 'demo+yuki@visatrack.test',
+        citizenship: 'Japan',
+        based: 'Tokyo',
+        primary_platform: 'DJ / Electronic',
+        genre: 'Bass',
+      }),
+      evidenceData: generateEvidence(fixedIds.case6, 'HOSHi', 'Bass', 'DJ / Electronic'),
+      evidenceScore: scoreEvidence(fixedIds.case6),
+      criteriaCoverage: criteriaCoverage(fixedIds.case6),
+      status: 'dossier_preview',
+      createdAt: hoursAgo(1),
+      updatedAt: hoursAgo(1),
+    },
+    {
+      // Case 7 — Dossier preview about to expire (~46h elapsed, ~2h to go).
+      id: fixedIds.case7,
+      artistId: fixedIds.artist7,
+      visaType: 'O-1B',
+      intakeData: intakeBase({
+        legal_name: 'Rafa Mendes',
+        stage_name: 'RAFA·M',
+        email: 'demo+rafa@visatrack.test',
+        citizenship: 'Brazil',
+        based: 'São Paulo',
+        primary_platform: 'Music / Recording Artist',
+        genre: 'MPB',
+      }),
+      evidenceData: generateEvidence(
+        fixedIds.case7,
+        'RAFA·M',
+        'MPB',
+        'Music / Recording Artist',
+      ),
+      evidenceScore: scoreEvidence(fixedIds.case7),
+      criteriaCoverage: criteriaCoverage(fixedIds.case7),
+      status: 'dossier_preview',
+      createdAt: hoursAgo(46),
+      updatedAt: hoursAgo(46),
+    },
+    {
+      // Case 8 — Audit expired: previously had a Standard audit, now lapsed.
+      id: fixedIds.case8,
+      artistId: fixedIds.artist8,
+      visaType: 'O-1B',
+      intakeData: intakeBase({
+        legal_name: 'Sasha Volkov',
+        stage_name: 'V Λ R',
+        email: 'demo+sasha@visatrack.test',
+        citizenship: 'Ukraine',
+        based: 'Berlin',
+        primary_platform: 'DJ / Electronic',
+        genre: 'Techno',
+      }),
+      evidenceData: generateEvidence(fixedIds.case8, 'V Λ R', 'Techno', 'DJ / Electronic'),
+      evidenceScore: scoreEvidence(fixedIds.case8),
+      criteriaCoverage: criteriaCoverage(fixedIds.case8),
+      status: 'audit_expired',
+      createdAt: offset(-100),
+      updatedAt: offset(-1),
+    },
+    {
+      // Case 9 — Just purchased Standard audit. Active 90-day window, not yet listed.
+      id: fixedIds.case9,
+      artistId: fixedIds.artist9,
+      visaType: 'O-1B',
+      intakeData: intakeBase({
+        legal_name: 'Chen Wei',
+        stage_name: 'WEi.',
+        email: 'demo+chen@visatrack.test',
+        citizenship: 'China',
+        based: 'Hong Kong',
+        primary_platform: 'YouTube',
+        genre: 'Music',
+      }),
+      evidenceData: generateEvidence(fixedIds.case9, 'WEi.', 'Music', 'YouTube'),
+      evidenceScore: scoreEvidence(fixedIds.case9),
+      criteriaCoverage: criteriaCoverage(fixedIds.case9),
+      status: 'audited',
+      createdAt: hoursAgo(8),
+      updatedAt: hoursAgo(1),
+    },
+    {
+      // Case 10 — Just purchased Concierge audit. Active window, not yet listed.
+      id: fixedIds.case10,
+      artistId: fixedIds.artist10,
+      visaType: 'O-1B',
+      intakeData: intakeBase({
+        legal_name: 'Isla Carrington',
+        stage_name: 'ISLA',
+        email: 'demo+isla@visatrack.test',
+        citizenship: 'United Kingdom',
+        based: 'London',
+        primary_platform: 'Instagram',
+        genre: 'Fashion',
+      }),
+      evidenceData: generateEvidence(fixedIds.case10, 'ISLA', 'Fashion', 'Instagram'),
+      evidenceScore: scoreEvidence(fixedIds.case10),
+      criteriaCoverage: criteriaCoverage(fixedIds.case10),
+      status: 'audited',
+      createdAt: hoursAgo(4),
+      updatedAt: hoursAgo(1),
+    },
   ];
 
   const claims: FirmClaim[] = [
@@ -351,6 +533,86 @@ export function buildSeed(): StoreShape {
     };
   });
 
+  // Audit history. Cases that have moved past dossier_preview need a backing
+  // audit row so the gating + dossier UI render correctly.
+  const auditAt = (paidIso: string): { paidAt: string; expiresAt: string } => ({
+    paidAt: paidIso,
+    expiresAt: new Date(Date.parse(paidIso) + AUDIT_WINDOW_MS).toISOString(),
+  });
+  const audits: ArtistAudit[] = [
+    // Existing claim cases — implicitly already audited under the new flow.
+    {
+      id: fixedIds.audit1,
+      caseId: fixedIds.case1,
+      tier: 'standard',
+      priceCents: PRICING.audit.standard,
+      ...auditAt(offset(-10)),
+      stripeChargeId: null,
+    },
+    {
+      id: fixedIds.audit2,
+      caseId: fixedIds.case2,
+      tier: 'standard',
+      priceCents: PRICING.audit.standard,
+      ...auditAt(offset(-7)),
+      stripeChargeId: null,
+    },
+    {
+      id: fixedIds.audit4,
+      caseId: fixedIds.case4,
+      tier: 'concierge',
+      priceCents: PRICING.audit.concierge,
+      ...auditAt(offset(-25)),
+      stripeChargeId: null,
+    },
+    {
+      id: fixedIds.audit5,
+      caseId: fixedIds.case5,
+      tier: 'standard',
+      priceCents: PRICING.audit.standard,
+      ...auditAt(offset(-20)),
+      stripeChargeId: null,
+    },
+    // Case 8 — audit purchased ~95d ago, now expired.
+    {
+      id: fixedIds.audit8,
+      caseId: fixedIds.case8,
+      tier: 'standard',
+      priceCents: PRICING.audit.standard,
+      paidAt: offset(-95),
+      expiresAt: offset(-5),
+      stripeChargeId: null,
+    },
+    // Case 9 — Standard audit purchased ~1h ago. Full 90 days remaining.
+    {
+      id: fixedIds.audit9,
+      caseId: fixedIds.case9,
+      tier: 'standard',
+      priceCents: PRICING.audit.standard,
+      ...auditAt(hoursAgo(1)),
+      stripeChargeId: null,
+    },
+    // Case 10 — Concierge audit purchased ~1h ago.
+    {
+      id: fixedIds.audit10,
+      caseId: fixedIds.case10,
+      tier: 'concierge',
+      priceCents: PRICING.audit.concierge,
+      ...auditAt(hoursAgo(1)),
+      stripeChargeId: null,
+    },
+  ];
+
+  const auditAddons: AuditAddon[] = [
+    {
+      id: randomUUID(),
+      caseId: fixedIds.case10,
+      kind: 'manager_kit',
+      priceCents: PRICING.audit_addons.manager_kit,
+      purchasedAt: hoursAgo(1),
+    },
+  ];
+
   return {
     artists,
     cases,
@@ -380,8 +642,8 @@ export function buildSeed(): StoreShape {
       },
     ],
     waitlist: [],
-    audits: [],
-    auditAddons: [],
+    audits,
+    auditAddons,
   };
 }
 
