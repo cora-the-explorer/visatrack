@@ -1,14 +1,21 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { store } from '@/lib/store';
+import { store, ENGAGEMENT_WINDOW_MS } from '@/lib/store';
 import { coverageCount } from '@/lib/mock-evidence';
+
+const fmt$ = (cents: number) => `$${(cents / 100).toLocaleString('en-US')}`;
+
+function daysRemaining(claimedAt: string): number {
+  const elapsed = Date.now() - Date.parse(claimedAt);
+  return Math.max(0, Math.ceil((ENGAGEMENT_WINDOW_MS - elapsed) / 86_400_000));
+}
 
 export default async function PortalOverview() {
   const session = await getSession();
   if (!session || session.kind !== 'artist') redirect('/login?role=artist');
   const cases = await store.listCasesByArtist(session.artistId);
-  const c = cases[cases.length - 1]; // newest
+  const c = cases[cases.length - 1];
 
   if (!c) {
     return (
@@ -29,11 +36,19 @@ export default async function PortalOverview() {
     );
   }
 
-  const bids = await store.listBidsForCase(c.id);
-  const accepted = bids.find((b) => b.status === 'accepted');
-  const pending = bids.filter((b) => b.status === 'pending').length;
-  const handoff = accepted ? await store.getHandoffForCase(c.id) : undefined;
-  const firmAccepted = accepted ? await store.getFirm(accepted.firmId) : undefined;
+  const claims = await store.listClaimsForCase(c.id);
+  const active = claims.find((cl) => cl.status === 'active' || cl.status === 'engaged');
+  const firm = active ? await store.getFirm(active.firmId) : undefined;
+
+  const firmStatusLabel = active
+    ? active.status === 'engaged'
+      ? 'Engaged'
+      : 'Matched'
+    : c.status === 'released_back'
+      ? 'Released'
+      : c.status === 'listed'
+        ? 'Awaiting'
+        : '—';
 
   return (
     <div style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 28px 96px' }}>
@@ -58,7 +73,7 @@ export default async function PortalOverview() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 48 }}>
         {[
           [statusLabel(c.status), 'Status'],
-          [String(pending), 'Open bids'],
+          [firmStatusLabel, 'Firm'],
           [`${coverageCount(c.criteriaCoverage)}/8`, 'USCIS criteria'],
           [String(c.evidenceScore ?? '—'), 'Evidence score'],
         ].map(([n, l]) => (
@@ -69,59 +84,73 @@ export default async function PortalOverview() {
         ))}
       </div>
 
-      {accepted && firmAccepted ? (
+      {active && firm ? (
         <div className="vt-card accent" style={{ marginBottom: 32 }}>
-          <div className="vt-section-eyebrow accent">✓ Matched</div>
+          <div className="vt-section-eyebrow accent">
+            ✓ {active.status === 'engaged' ? 'Engaged' : 'Matched'}
+          </div>
           <h2 className="serif" style={{ fontWeight: 500, fontSize: 28, margin: '0 0 12px' }}>
-            You matched with{' '}
-            <em style={{ color: 'var(--accent)', textShadow: 'var(--glow)' }}>{firmAccepted.displayName}</em>
+            Your case is with{' '}
+            <em style={{ color: 'var(--accent)', textShadow: 'var(--glow)' }}>{firm.displayName}</em>
           </h2>
           <p style={{ color: 'var(--ink-2)', margin: '0 0 18px' }}>
-            ${(accepted.priceCents / 100).toLocaleString('en-US')} · {accepted.timelineWeeks} weeks
-            · {firmAccepted.contactName} &lt;
-            <a className="vt-link" href={`mailto:${firmAccepted.contactEmail}`}>
-              {firmAccepted.contactEmail}
+            {firm.contactName} &lt;
+            <a className="vt-link" href={`mailto:${firm.contactEmail}`}>
+              {firm.contactEmail}
             </a>
-            &gt;
+            &gt; · unlock paid {fmt$(active.unlockFeeCents)}
           </p>
-          {handoff?.notes ? (
+          {active.status === 'active' ? (
             <p style={{ color: 'var(--ink-2)', fontSize: 14, margin: 0 }}>
-              <b>Next steps:</b> {handoff.notes}
+              <b>{daysRemaining(active.claimedAt)} day{daysRemaining(active.claimedAt) === 1 ? '' : 's'}</b>{' '}
+              remaining in their exclusive engagement window.
             </p>
           ) : null}
         </div>
+      ) : c.status === 'released_back' ? (
+        <div className="vt-card" style={{ marginBottom: 32 }}>
+          <div className="vt-section-eyebrow">Released back</div>
+          <p style={{ margin: 0, color: 'var(--ink-2)' }}>
+            The previous firm did not engage within their 7-day window. Your case is back in the
+            marketplace and another firm should claim it soon.
+          </p>
+        </div>
       ) : (
         <div className="vt-card" style={{ marginBottom: 32 }}>
-          <div className="vt-section-eyebrow">{c.status === 'listed' ? 'Awaiting bids' : 'Status'}</div>
+          <div className="vt-section-eyebrow">{c.status === 'listed' ? 'Awaiting claim' : 'Status'}</div>
           <p style={{ margin: 0, color: 'var(--ink-2)' }}>
             {c.status === 'listed'
-              ? `Your dossier is in front of approved firms. ${pending} bid${pending === 1 ? '' : 's'} so far.`
+              ? 'Your dossier is in front of approved firms. The first eligible firm to claim wins exclusive 7-day engagement.'
               : c.status === 'dossier_ready'
-                ? 'Your dossier is ready. List it to start receiving bids.'
+                ? 'Your dossier is ready. List it to enter the marketplace.'
                 : 'Your dossier is being prepared.'}
           </p>
           {c.status === 'dossier_ready' ? (
             <Link href={`/match/${c.id}` as never} className="vt-cta" style={{ marginTop: 18 }}>
-              Get matched with a firm →
+              List my case →
             </Link>
           ) : null}
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }}>
-        <Link href={'/portal/bids' as never} className="vt-card" style={{ textDecoration: 'none', display: 'block' }}>
-          <div className="vt-section-eyebrow">Bids</div>
-          <h3>{pending} open · {bids.length} total</h3>
+        <Link href={'/portal/firm' as never} className="vt-card" style={{ textDecoration: 'none', display: 'block' }}>
+          <div className="vt-section-eyebrow">Firm</div>
+          <h3>
+            {active && firm ? firm.displayName : c.status === 'released_back' ? 'Released' : 'Awaiting'}
+          </h3>
           <p style={{ color: 'var(--ink-2)', fontSize: 14, margin: '0 0 14px' }}>
-            Compare price, timeline, and pitch from each firm.
+            {active
+              ? 'Vetted firm chosen by the platform via claim order.'
+              : 'No firm has claimed your case yet.'}
           </p>
-          <span className="vt-link">Review bids →</span>
+          <span className="vt-link">View firm →</span>
         </Link>
         <Link href={'/portal/dossier' as never} className="vt-card" style={{ textDecoration: 'none', display: 'block' }}>
           <div className="vt-section-eyebrow">Dossier</div>
           <h3>{c.evidenceData ? `${c.evidenceData.press.length}+ press, ${c.evidenceData.testimonials.length} letters` : 'Compiling…'}</h3>
           <p style={{ color: 'var(--ink-2)', fontSize: 14, margin: '0 0 14px' }}>
-            {accepted ? 'Fully unlocked.' : 'Locked preview until you accept a bid.'}
+            {active ? 'Fully unlocked.' : 'Locked preview until a firm claims your case.'}
           </p>
           <span className="vt-link">Open dossier →</span>
         </Link>
@@ -142,6 +171,10 @@ function statusLabel(s: string) {
       return 'Listed';
     case 'matched':
       return 'Matched';
+    case 'claimed':
+      return 'Claimed';
+    case 'released_back':
+      return 'Released';
     case 'closed':
       return 'Closed';
     default:

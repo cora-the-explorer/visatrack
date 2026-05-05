@@ -15,9 +15,9 @@ export default async function PortalDossierPage() {
       </div>
     );
   }
-  const bids = await store.listBidsForCase(c.id);
-  const accepted = bids.find((b) => b.status === 'accepted');
-  const locked = !accepted;
+  const claims = await store.listClaimsForCase(c.id);
+  const active = claims.find((cl) => cl.status === 'active' || cl.status === 'engaged');
+  const locked = !active;
 
   return (
     <div style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 28px 96px' }}>
@@ -37,7 +37,7 @@ export default async function PortalDossierPage() {
       </h1>
       <p style={{ color: 'var(--ink-2)', maxWidth: '60ch', margin: '0 0 36px' }}>
         {locked
-          ? 'Preview only. Accept a firm bid to unlock the full file (contracts, complete brief, all expert letters).'
+          ? 'Preview only. The full file (contracts, complete brief, all expert letters) unlocks once a firm claims your case.'
           : 'Fully unlocked — your matched firm has the same view.'}
       </p>
       <DossierStats c={c} />

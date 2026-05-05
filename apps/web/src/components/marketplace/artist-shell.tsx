@@ -7,7 +7,7 @@ import './theme.css';
 
 const NAV = [
   { href: '/portal', label: 'My Case' },
-  { href: '/portal/bids', label: 'Bids' },
+  { href: '/portal/firm', label: 'Firm' },
   { href: '/portal/dossier', label: 'Dossier' },
 ] as const;
 

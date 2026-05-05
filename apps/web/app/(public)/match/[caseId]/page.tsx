@@ -77,8 +77,9 @@ export default function MatchPage() {
           </em>
         </h1>
         <p style={{ fontSize: 16, color: 'var(--ink-2)', margin: '0 0 36px', maxWidth: '60ch' }}>
-          Vetted O-1B firms see this. They have 48 hours to bid. You'll get a magic link to your
-          portal where you can review every bid side by side.
+          Vetted O-1B firms see this. The first eligible firm to claim your case wins exclusive
+          7-day engagement — flat unlock fee, no auctions. You'll get a magic link to your
+          portal so you can see who claimed and reach back out.
         </p>
 
         <form onSubmit={submit} className="vt-card accent" style={{ background: '#1a1a1a' }}>
