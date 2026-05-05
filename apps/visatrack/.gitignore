@@ -1,0 +1,9 @@
+node_modules
+.next
+.turbo
+.env
+.env.local
+*.tsbuildinfo
+
+# Playwright login session storage (contains scraper account cookies — never commit)
+.scraper-state/

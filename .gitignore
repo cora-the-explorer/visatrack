@@ -44,3 +44,7 @@ drizzle/.cache/
 *.pem
 .vercel
 .cache/
+
+# marketplace MVP local data
+apps/web/.data/
+apps/web/logs/

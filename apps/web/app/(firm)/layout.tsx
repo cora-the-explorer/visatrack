@@ -1,14 +1,23 @@
 import type { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
 import { ToastProvider } from '@visa-track/ui';
-import { Sidebar } from '@/components/layout/sidebar';
+import { getSession } from '@/lib/session';
+import { store } from '@/lib/store';
+import { FirmShell } from '@/components/marketplace/firm-shell';
 
-export default function FirmLayout({ children }: { children: ReactNode }) {
+export const metadata = { title: 'Firm Console · VisaTrack' };
+
+export default async function FirmLayout({ children }: { children: ReactNode }) {
+  const session = await getSession();
+  if (!session || session.kind !== 'firm') redirect('/login?role=firm');
+  const firm = await store.getFirm(session.firmId);
+  if (!firm) redirect('/login?role=firm');
   return (
     <ToastProvider>
-      <div className="fixed inset-x-0 top-0 z-50 h-[2px] bg-gradient-to-r from-indigo-500 to-violet-500" />
-      <div className="flex h-screen overflow-hidden bg-slate-50 pt-[2px] text-slate-800">
-        <Sidebar />
-        <main className="flex h-screen flex-1 flex-col overflow-hidden">{children}</main>
+      <div className="vt-dark" style={{ minHeight: '100vh' }}>
+        <FirmShell firmName={firm.displayName} email={firm.contactEmail}>
+          {children}
+        </FirmShell>
       </div>
     </ToastProvider>
   );
