@@ -24,10 +24,14 @@ import { PRICING } from '@/lib/pricing';
 
 export default async function DossierPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ caseId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { caseId } = await params;
+  const sp = (await searchParams) ?? {};
+  const fromMatch = sp.from === 'match';
   const c = await store.getCase(caseId);
   if (!c) notFound();
   const stage = c.intakeData?.stage_name || 'your';
@@ -97,6 +101,23 @@ export default async function DossierPage({
               ? 'Your free preview window closed. Re-audit for $9 to refresh evidence and unlock the full dossier.'
               : `Found across the open web in ~5 minutes. Below is a free preview — quality at a glance, exhibits summarized. Unlock the full audit to see sources, the numerical score, and 3 specific actions to lift it.`}
         </p>
+
+        {fromMatch ? (
+          <div
+            className="vt-card"
+            style={{
+              borderColor: 'var(--accent)',
+              background: 'rgba(57,255,138,.05)',
+              marginBottom: 24,
+            }}
+          >
+            <div className="vt-section-eyebrow accent">Audit required to list</div>
+            <p style={{ color: 'var(--ink-2)', margin: 0, fontSize: 14 }}>
+              Listing in the marketplace is free, but it's gated on a paid audit. Pick a tier
+              below to unlock the full dossier and listing eligibility.
+            </p>
+          </div>
+        ) : null}
 
         {isExpired ? <ExpiredView caseId={c.id} /> : null}
 
