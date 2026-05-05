@@ -431,17 +431,30 @@ export const artistCaseStatusEnum = pgEnum('artist_case_status', [
   'dossier_ready',
   'listed',
   'matched',
+  'claimed',
+  'released_back',
   'closed',
 ]);
 
 export const firmStatusEnum = pgEnum('firm_status', ['pending', 'approved', 'suspended']);
 
+// DEPRECATED — v2 claim model. Retained for one release behind a feature flag
+// so existing rows in firm_bids continue to read.
 export const bidStatusEnum = pgEnum('bid_status', [
   'pending',
   'accepted',
   'declined',
   'withdrawn',
 ]);
+
+export const claimStatusEnum = pgEnum('claim_status', [
+  'active',
+  'engaged',
+  'released',
+  'closed',
+]);
+
+export const pricingBandEnum = pgEnum('pricing_band', ['low', 'medium', 'high']);
 
 export const magicLinkRoleEnum = pgEnum('magic_link_role', ['artist', 'firm', 'admin']);
 
@@ -512,6 +525,8 @@ export const firmProfiles = pgTable(
   ],
 );
 
+// DEPRECATED — v2 claim model. Kept in place behind feature flag for one
+// release so historical rows continue to read. Drop in a later migration.
 export const firmBids = pgTable(
   'firm_bids',
   {
@@ -537,6 +552,59 @@ export const firmBids = pgTable(
   ],
 );
 
+// v2 claim model. First eligible vetted firm to claim wins exclusive 7-day
+// engagement window for a flat unlock fee. Stripe wiring is Track B —
+// `unlockFeeCents` is captured from `case_pricing` at claim time; real charge
+// id will live alongside it later.
+export const firmClaims = pgTable(
+  'firm_claims',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => artistCases.id, { onDelete: 'cascade' }),
+    firmId: uuid('firm_id')
+      .notNull()
+      .references(() => firmProfiles.id, { onDelete: 'cascade' }),
+    unlockFeeCents: integer('unlock_fee_cents').notNull(),
+    status: claimStatusEnum('status').notNull().default('active'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }).notNull().defaultNow(),
+    engagedAt: timestamp('engaged_at', { withTimezone: true }),
+    releasedAt: timestamp('released_at', { withTimezone: true }),
+    releaseReason: text('release_reason'),
+  },
+  (t) => [
+    index('firm_claims_case_idx').on(t.caseId),
+    index('firm_claims_firm_idx').on(t.firmId),
+    index('firm_claims_status_idx').on(t.status),
+  ],
+);
+
+// Pricing tiers keyed by evidence-quality band. Low/Medium/High.
+// Seed values: $300 / $400 / $500. Editable via admin in Track B.
+export const casePricing = pgTable(
+  'case_pricing',
+  {
+    band: pricingBandEnum('band').primaryKey(),
+    unlockFeeCents: integer('unlock_fee_cents').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
+// Recomputed from claim history. score = engagedWithinWindow / claimsTotal * 100.
+export const firmScores = pgTable(
+  'firm_scores',
+  {
+    firmId: uuid('firm_id')
+      .primaryKey()
+      .references(() => firmProfiles.id, { onDelete: 'cascade' }),
+    claimsTotal: integer('claims_total').notNull().default(0),
+    engagedWithinWindow: integer('engaged_within_window').notNull().default(0),
+    score: integer('score').notNull().default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
 export const magicLinkTokens = pgTable(
   'magic_link_tokens',
   {
@@ -551,6 +619,8 @@ export const magicLinkTokens = pgTable(
   (t) => [index('magic_link_email_idx').on(t.email), index('magic_link_token_idx').on(t.token)],
 );
 
+// Handoffs (intro/retainer tracking).
+// claimId is the v2 reference; acceptedBidId is DEPRECATED — v2 claim model.
 export const handoffs = pgTable(
   'handoffs',
   {
@@ -561,9 +631,10 @@ export const handoffs = pgTable(
     firmId: uuid('firm_id')
       .notNull()
       .references(() => firmProfiles.id, { onDelete: 'cascade' }),
-    acceptedBidId: uuid('accepted_bid_id')
-      .notNull()
-      .references(() => firmBids.id, { onDelete: 'cascade' }),
+    claimId: uuid('claim_id').references(() => firmClaims.id, { onDelete: 'set null' }),
+    acceptedBidId: uuid('accepted_bid_id').references(() => firmBids.id, {
+      onDelete: 'set null',
+    }),
     introSentAt: timestamp('intro_sent_at', { withTimezone: true }),
     retainerUrl: text('retainer_url'),
     notes: text('notes'),
@@ -612,8 +683,15 @@ export type ArtistCase = typeof artistCases.$inferSelect;
 export type NewArtistCase = typeof artistCases.$inferInsert;
 export type FirmProfile = typeof firmProfiles.$inferSelect;
 export type NewFirmProfile = typeof firmProfiles.$inferInsert;
+// DEPRECATED — v2 claim model.
 export type FirmBid = typeof firmBids.$inferSelect;
 export type NewFirmBid = typeof firmBids.$inferInsert;
+export type FirmClaim = typeof firmClaims.$inferSelect;
+export type NewFirmClaim = typeof firmClaims.$inferInsert;
+export type CasePricing = typeof casePricing.$inferSelect;
+export type NewCasePricing = typeof casePricing.$inferInsert;
+export type FirmScore = typeof firmScores.$inferSelect;
+export type NewFirmScore = typeof firmScores.$inferInsert;
 export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
 export type Handoff = typeof handoffs.$inferSelect;
 export type FirmWaitlistEntry = typeof firmWaitlist.$inferSelect;
