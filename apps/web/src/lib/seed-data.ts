@@ -1,8 +1,16 @@
 // Deterministic seed used both by the auto-seeder and packages/db/src/seed-marketplace.ts.
-// Three approved firms + five in-flight cases at various stages.
+// v2 claim model: 3 approved firms + 5 cases that exercise every claim state.
 import { randomUUID } from 'node:crypto';
 import { generateEvidence, scoreEvidence, criteriaCoverage } from './mock-evidence';
-import type { ArtistAccount, ArtistCase, FirmProfile, FirmBid, StoreShape } from './store';
+import {
+  unlockFeeCentsForCase,
+  type ArtistAccount,
+  type ArtistCase,
+  type FirmProfile,
+  type FirmClaim,
+  type FirmScore,
+  type StoreShape,
+} from './store';
 
 const fixedIds = {
   firmA: '11111111-1111-4111-8111-111111111111',
@@ -18,6 +26,9 @@ const fixedIds = {
   case3: 'c3333333-3333-4333-8333-333333333333',
   case4: 'c4444444-4444-4444-8444-444444444444',
   case5: 'c5555555-5555-4555-8555-555555555555',
+  claim1: 'cl111111-1111-4111-8111-111111111111',
+  claim4: 'cl444444-4444-4444-8444-444444444444',
+  claim5: 'cl555555-5555-4555-8555-555555555555',
 };
 
 const NOW = new Date('2026-05-04T12:00:00Z').toISOString();
@@ -115,7 +126,7 @@ export function buildSeed(): StoreShape {
       phone: '+39 333 1234567',
       citizenship: 'Italy',
       basedIn: 'Milan',
-      createdAt: offset(-4),
+      createdAt: offset(-30),
     },
     {
       id: fixedIds.artist5,
@@ -166,7 +177,7 @@ export function buildSeed(): StoreShape {
 
   const cases: ArtistCase[] = [
     {
-      // Case 1 — Listed, 2 bids in
+      // Case 1 — Active claim by firm A (in window)
       id: fixedIds.case1,
       artistId: fixedIds.artist1,
       visaType: 'O-1B',
@@ -182,17 +193,17 @@ export function buildSeed(): StoreShape {
       evidenceData: generateEvidence(fixedIds.case1, 'KIRA TNK', 'Tech House', 'DJ / Electronic'),
       evidenceScore: scoreEvidence(fixedIds.case1),
       criteriaCoverage: criteriaCoverage(fixedIds.case1),
-      status: 'listed',
+      status: 'claimed',
       targetVisaDate: offset(120),
       location: 'Berlin → Brooklyn',
       budgetBand: '$10–15k',
       briefNote:
         'Touring 30+ dates this year, need approved petition before Sept festival run. Beatport top-50, RA tech house top-15.',
       createdAt: offset(-12),
-      updatedAt: offset(-3),
+      updatedAt: offset(-2),
     },
     {
-      // Case 2 — Listed, no bids yet (fresh)
+      // Case 2 — Listed, in pool waiting for a claim
       id: fixedIds.case2,
       artistId: fixedIds.artist2,
       visaType: 'O-1B',
@@ -223,7 +234,7 @@ export function buildSeed(): StoreShape {
       updatedAt: offset(-1),
     },
     {
-      // Case 3 — Dossier ready but not listed yet
+      // Case 3 — Dossier ready (pre-list)
       id: fixedIds.case3,
       artistId: fixedIds.artist3,
       visaType: 'O-1B',
@@ -236,12 +247,7 @@ export function buildSeed(): StoreShape {
         primary_platform: 'YouTube',
         genre: 'Beauty / Lifestyle',
       }),
-      evidenceData: generateEvidence(
-        fixedIds.case3,
-        'ame.studio',
-        'Beauty',
-        'YouTube',
-      ),
+      evidenceData: generateEvidence(fixedIds.case3, 'ame.studio', 'Beauty', 'YouTube'),
       evidenceScore: scoreEvidence(fixedIds.case3),
       criteriaCoverage: criteriaCoverage(fixedIds.case3),
       status: 'dossier_ready',
@@ -249,7 +255,7 @@ export function buildSeed(): StoreShape {
       updatedAt: offset(-6),
     },
     {
-      // Case 4 — Matched (already accepted a bid)
+      // Case 4 — Engaged: firm C claimed and logged engagement (within window)
       id: fixedIds.case4,
       artistId: fixedIds.artist4,
       visaType: 'O-1B',
@@ -265,16 +271,16 @@ export function buildSeed(): StoreShape {
       evidenceData: generateEvidence(fixedIds.case4, 'LEONI', 'Fashion', 'Instagram'),
       evidenceScore: scoreEvidence(fixedIds.case4),
       criteriaCoverage: criteriaCoverage(fixedIds.case4),
-      status: 'matched',
+      status: 'claimed',
       targetVisaDate: offset(90),
       location: 'Milan → New York',
       budgetBand: '$15k+',
       briefNote: 'Already shooting in NYC quarterly. Want premium processing.',
       createdAt: offset(-30),
-      updatedAt: offset(-2),
+      updatedAt: offset(-3),
     },
     {
-      // Case 5 — Processing (just submitted intake)
+      // Case 5 — Released back: firm B claimed and let the window expire.
       id: fixedIds.case5,
       artistId: fixedIds.artist5,
       visaType: 'O-1B',
@@ -287,68 +293,92 @@ export function buildSeed(): StoreShape {
         primary_platform: 'TikTok',
         genre: 'Comedy',
       }),
-      status: 'processing',
-      createdAt: offset(-1),
+      evidenceData: generateEvidence(fixedIds.case5, 'NIA·P', 'Comedy', 'TikTok'),
+      evidenceScore: scoreEvidence(fixedIds.case5),
+      criteriaCoverage: criteriaCoverage(fixedIds.case5),
+      status: 'released_back',
+      targetVisaDate: offset(150),
+      location: 'Mumbai → Los Angeles',
+      budgetBand: '$5–10k',
+      briefNote: 'Looking for second-claim firm — first did not engage in window.',
+      createdAt: offset(-22),
       updatedAt: offset(-1),
     },
   ];
 
-  const bids: FirmBid[] = [
+  const claims: FirmClaim[] = [
     {
-      id: randomUUID(),
+      id: fixedIds.claim1,
       caseId: fixedIds.case1,
       firmId: fixedIds.firmA,
-      priceCents: 12_000_00,
-      timelineWeeks: 6,
-      pitch:
-        'We have filed 14 tech house DJ petitions in the last 18 months — including two with Beatport rankings inside your range. Premium processing included.',
-      status: 'pending',
-      submittedAt: offset(-2),
+      unlockFeeCents: unlockFeeCentsForCase(cases[0]!),
+      status: 'active',
+      claimedAt: offset(-2),
     },
     {
-      id: randomUUID(),
-      caseId: fixedIds.case1,
-      firmId: fixedIds.firmB,
-      priceCents: 9_500_00,
-      timelineWeeks: 8,
-      pitch:
-        'Ex-USCIS adjudicator on staff. We can pre-flight your dossier against the exact rubric your case will be graded on.',
-      status: 'pending',
-      submittedAt: offset(-1),
-    },
-    {
-      id: randomUUID(),
+      id: fixedIds.claim4,
       caseId: fixedIds.case4,
       firmId: fixedIds.firmC,
-      priceCents: 18_500_00,
-      timelineWeeks: 4,
-      pitch:
-        'White-glove fashion-talent practice. We have filed for runway and editorial talent at every Milan/Paris/NYC house.',
-      status: 'accepted',
-      submittedAt: offset(-15),
-      decidedAt: offset(-2),
+      unlockFeeCents: unlockFeeCentsForCase(cases[3]!),
+      status: 'engaged',
+      claimedAt: offset(-5),
+      engagedAt: offset(-3),
+    },
+    {
+      id: fixedIds.claim5,
+      caseId: fixedIds.case5,
+      firmId: fixedIds.firmB,
+      unlockFeeCents: unlockFeeCentsForCase(cases[4]!),
+      status: 'released',
+      claimedAt: offset(-9),
+      releasedAt: offset(-1),
+      releaseReason: 'auto-released: 7-day window elapsed without engagement',
     },
   ];
+
+  // Recompute firm scores from claim history.
+  const firmScores: FirmScore[] = firms.map((f) => {
+    const fClaims = claims.filter((c) => c.firmId === f.id);
+    const total = fClaims.length;
+    const engaged = fClaims.filter((c) => !!c.engagedAt).length;
+    const ratio = total === 0 ? 0 : engaged / total;
+    return {
+      firmId: f.id,
+      claimsTotal: total,
+      engagedWithinWindow: engaged,
+      score: Math.round(ratio * 100),
+      updatedAt: NOW,
+    };
+  });
 
   return {
     artists,
     cases,
     firms,
-    bids,
+    bids: [], // DEPRECATED — v2 claim model
+    claims,
+    firmScores,
     tokens: [],
-    handoffs: bids[2]
-      ? [
-          {
-            id: randomUUID(),
-            caseId: fixedIds.case4,
-            firmId: fixedIds.firmC,
-            acceptedBidId: bids[2].id,
-            introSentAt: offset(-2),
-            notes: 'Intro sent. Awaiting countersigned engagement letter.',
-            createdAt: offset(-2),
-          },
-        ]
-      : [],
+    handoffs: [
+      {
+        id: randomUUID(),
+        caseId: fixedIds.case1,
+        firmId: fixedIds.firmA,
+        claimId: fixedIds.claim1,
+        introSentAt: offset(-2),
+        notes: 'Auto-created on claim. Firm has 7 days to log first engagement with the artist.',
+        createdAt: offset(-2),
+      },
+      {
+        id: randomUUID(),
+        caseId: fixedIds.case4,
+        firmId: fixedIds.firmC,
+        claimId: fixedIds.claim4,
+        introSentAt: offset(-5),
+        notes: 'Engagement logged. Drafting in progress.',
+        createdAt: offset(-5),
+      },
+    ],
     waitlist: [],
   };
 }
