@@ -5,6 +5,11 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import {
+  PRICING,
+  AUDIT_WINDOW_MS,
+  PREVIEW_WINDOW_MS as PREVIEW_WINDOW_MS_FROM_PRICING,
+} from './pricing';
 
 export type ArtistAccount = {
   id: string;
@@ -43,6 +48,9 @@ export type EvidenceData = {
 export type ArtistCaseStatus =
   | 'intake'
   | 'processing'
+  | 'dossier_preview'
+  | 'audited'
+  | 'audit_expired'
   | 'dossier_ready'
   | 'listed'
   | 'matched'
@@ -129,13 +137,44 @@ export type FirmScore = {
 };
 
 // Evidence-quality bands → flat unlock fee (cents). v2 claim model.
+// Sourced from PRICING.case_unlock_by_band so prices have a single source of
+// truth across artist audit funnel and firm marketplace.
 export const CASE_PRICING = {
-  low: 300_00,
-  medium: 400_00,
-  high: 500_00,
+  low: PRICING.case_unlock_by_band.low,
+  medium: PRICING.case_unlock_by_band.medium,
+  high: PRICING.case_unlock_by_band.high,
 } as const;
 
 export type PricingBand = keyof typeof CASE_PRICING;
+
+export type AuditTier = 'standard' | 'concierge';
+export type AuditAddonKind =
+  | 'manager_kit'
+  | 'express_evidence'
+  | 'relist_boost'
+  | 're_audit';
+
+// Audit purchases. Stripe wiring is Track B — `stripeChargeId` stays null in
+// the demo. `expiresAt = paidAt + 90d`. If `refundedAt` is set the audit no
+// longer counts as valid.
+export type ArtistAudit = {
+  id: string;
+  caseId: string;
+  tier: AuditTier;
+  priceCents: number;
+  paidAt: string;
+  expiresAt: string;
+  refundedAt?: string;
+  stripeChargeId?: string | null;
+};
+
+export type AuditAddon = {
+  id: string;
+  caseId: string;
+  kind: AuditAddonKind;
+  priceCents: number;
+  purchasedAt: string;
+};
 
 export const ENGAGEMENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -197,6 +236,8 @@ export type StoreShape = {
   tokens: MagicLinkToken[];
   handoffs: Handoff[];
   waitlist: FirmWaitlistEntry[];
+  audits: ArtistAudit[];
+  auditAddons: AuditAddon[];
 };
 
 const DATA_DIR = path.join(process.cwd(), '.data');
@@ -212,6 +253,8 @@ const empty = (): StoreShape => ({
   tokens: [],
   handoffs: [],
   waitlist: [],
+  audits: [],
+  auditAddons: [],
 });
 
 let seeded = false;
@@ -290,14 +333,52 @@ function tickAutoRelease(s: StoreShape): boolean {
   return mutated;
 }
 
+// Preview/audit expiry: dossier_preview → audit_expired after 48h; audited →
+// audit_expired after 90d if not listed/matched/claimed/closed. Demo-grade —
+// Track B replaces with Trigger.dev.
+function tickAuditLifecycle(s: StoreShape): boolean {
+  const now = Date.now();
+  const nowIso = new Date(now).toISOString();
+  let mutated = false;
+
+  for (const c of s.cases) {
+    if (c.status === 'dossier_preview') {
+      const elapsed = now - Date.parse(c.createdAt);
+      if (elapsed >= PREVIEW_WINDOW_MS_FROM_PRICING) {
+        c.status = 'audit_expired';
+        c.updatedAt = nowIso;
+        mutated = true;
+      }
+      continue;
+    }
+    if (c.status === 'audited') {
+      const audit = s.audits
+        .filter((a) => a.caseId === c.id && !a.refundedAt)
+        .sort((a, b) => Date.parse(b.paidAt) - Date.parse(a.paidAt))[0];
+      if (!audit) continue;
+      if (Date.parse(audit.expiresAt) <= now) {
+        c.status = 'audit_expired';
+        c.updatedAt = nowIso;
+        mutated = true;
+      }
+    }
+  }
+  return mutated;
+}
+
 async function maybeTick(s: StoreShape): Promise<StoreShape> {
   const now = Date.now();
   if (now - lastTickAt < TICK_THROTTLE_MS) return s;
   lastTickAt = now;
-  const mutated = tickAutoRelease(s);
-  if (mutated) await writeStore(s);
+  const a = tickAutoRelease(s);
+  const b = tickAuditLifecycle(s);
+  if (a || b) await writeStore(s);
   return s;
 }
+
+// Re-export from pricing.ts so external callers can import from store.
+export const PREVIEW_WINDOW_MS = PREVIEW_WINDOW_MS_FROM_PRICING;
+export { AUDIT_WINDOW_MS };
 
 export const store = {
   async all(): Promise<StoreShape> {
@@ -576,5 +657,72 @@ export const store = {
       s.waitlist.push(created);
     });
     return created;
+  },
+
+  // Audits (v3 audit funnel)
+  async createAudit(
+    a: Omit<ArtistAudit, 'id' | 'paidAt' | 'expiresAt'> & {
+      paidAt?: string;
+      expiresAt?: string;
+    },
+  ): Promise<ArtistAudit> {
+    const paidAt = a.paidAt ?? new Date().toISOString();
+    const expiresAt =
+      a.expiresAt ?? new Date(Date.parse(paidAt) + AUDIT_WINDOW_MS).toISOString();
+    const created: ArtistAudit = {
+      ...a,
+      paidAt,
+      expiresAt,
+      id: randomUUID(),
+    };
+    await this.update((s) => {
+      s.audits.push(created);
+    });
+    return created;
+  },
+
+  async listAuditsForCase(caseId: string): Promise<ArtistAudit[]> {
+    const s = await this.all();
+    return s.audits.filter((a) => a.caseId === caseId);
+  },
+
+  async getActiveAuditForCase(caseId: string): Promise<ArtistAudit | undefined> {
+    const s = await this.all();
+    const now = Date.now();
+    return s.audits
+      .filter(
+        (a) =>
+          a.caseId === caseId &&
+          !a.refundedAt &&
+          Date.parse(a.expiresAt) > now,
+      )
+      .sort((a, b) => Date.parse(b.paidAt) - Date.parse(a.paidAt))[0];
+  },
+
+  async getLatestAuditForCase(caseId: string): Promise<ArtistAudit | undefined> {
+    const s = await this.all();
+    return s.audits
+      .filter((a) => a.caseId === caseId)
+      .sort((a, b) => Date.parse(b.paidAt) - Date.parse(a.paidAt))[0];
+  },
+
+  // Audit add-ons
+  async createAddon(
+    a: Omit<AuditAddon, 'id' | 'purchasedAt'> & { purchasedAt?: string },
+  ): Promise<AuditAddon> {
+    const created: AuditAddon = {
+      ...a,
+      purchasedAt: a.purchasedAt ?? new Date().toISOString(),
+      id: randomUUID(),
+    };
+    await this.update((s) => {
+      s.auditAddons.push(created);
+    });
+    return created;
+  },
+
+  async listAddonsForCase(caseId: string): Promise<AuditAddon[]> {
+    const s = await this.all();
+    return s.auditAddons.filter((a) => a.caseId === caseId);
   },
 };

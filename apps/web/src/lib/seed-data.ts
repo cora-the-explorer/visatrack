@@ -380,6 +380,8 @@ export function buildSeed(): StoreShape {
       },
     ],
     waitlist: [],
+    audits: [],
+    auditAddons: [],
   };
 }
 

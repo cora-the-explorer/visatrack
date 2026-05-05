@@ -428,12 +428,25 @@ export const ragChunks = pgTable(
 export const artistCaseStatusEnum = pgEnum('artist_case_status', [
   'intake',
   'processing',
+  'dossier_preview',
+  'audited',
+  'audit_expired',
   'dossier_ready',
   'listed',
   'matched',
   'claimed',
   'released_back',
   'closed',
+]);
+
+// v3 audit funnel — paid audit replaces free dossier as the listing toll.
+export const auditTierEnum = pgEnum('audit_tier', ['standard', 'concierge']);
+
+export const auditAddonKindEnum = pgEnum('audit_addon_kind', [
+  'manager_kit',
+  'express_evidence',
+  'relist_boost',
+  're_audit',
 ]);
 
 export const firmStatusEnum = pgEnum('firm_status', ['pending', 'approved', 'suspended']);
@@ -659,6 +672,45 @@ export const firmWaitlist = pgTable(
   (t) => [index('firm_waitlist_email_idx').on(t.contactEmail)],
 );
 
+// v3 audit funnel. Stripe wiring is Track B — `stripeChargeId` stays null in
+// the demo, `priceCents` is captured from PRICING.audit at purchase time.
+// `expiresAt = paidAt + 90d`. After expiry, case status flips to `audit_expired`.
+export const artistAudits = pgTable(
+  'artist_audits',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => artistCases.id, { onDelete: 'cascade' }),
+    tier: auditTierEnum('tier').notNull(),
+    priceCents: integer('price_cents').notNull(),
+    paidAt: timestamp('paid_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    refundedAt: timestamp('refunded_at', { withTimezone: true }),
+    stripeChargeId: text('stripe_charge_id'),
+  },
+  (t) => [
+    index('artist_audits_case_idx').on(t.caseId),
+    index('artist_audits_expires_idx').on(t.expiresAt),
+  ],
+);
+
+// Per-case audit add-ons (manager kit, express, re-list boost, re-audit).
+// Same demo posture: priceCents recorded, no real charge.
+export const auditAddons = pgTable(
+  'audit_addons',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => artistCases.id, { onDelete: 'cascade' }),
+    kind: auditAddonKindEnum('kind').notNull(),
+    priceCents: integer('price_cents').notNull(),
+    purchasedAt: timestamp('purchased_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('audit_addons_case_idx').on(t.caseId)],
+);
+
 // -- Type exports ----------------------------------------------------------
 
 export type Tenant = typeof tenants.$inferSelect;
@@ -695,3 +747,7 @@ export type NewFirmScore = typeof firmScores.$inferInsert;
 export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
 export type Handoff = typeof handoffs.$inferSelect;
 export type FirmWaitlistEntry = typeof firmWaitlist.$inferSelect;
+export type ArtistAudit = typeof artistAudits.$inferSelect;
+export type NewArtistAudit = typeof artistAudits.$inferInsert;
+export type AuditAddon = typeof auditAddons.$inferSelect;
+export type NewAuditAddon = typeof auditAddons.$inferInsert;
