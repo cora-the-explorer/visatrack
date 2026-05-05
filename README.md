@@ -62,11 +62,19 @@ pnpm dev
 ## Demo MVP (Track A)
 
 The current demo runs the end-to-end flow: artists upload intake → AI builds a dossier
-→ vetted O-1B firms see the inbox → first eligible firm claims for a flat unlock fee →
-7-day exclusive engagement → handoff. See
-**[docs/marketplace.md](docs/marketplace.md)** for the full flow, demo URLs, and API surface.
+→ free preview with locked exhibits → artist purchases an audit ($19 Standard or $49
+Audit + Concierge) → vetted O-1B firms see the inbox → first eligible firm claims for a
+flat unlock fee → 7-day exclusive engagement → handoff. See
+**[docs/marketplace.md](docs/marketplace.md)** for the firm side and
+**[docs/audit-funnel.md](docs/audit-funnel.md)** for the artist audit funnel.
 
-> **v2.0 (May 2026) shipped.** The demo now uses the **claim** mechanic — flat unlock fee
+> **v3.0 (May 2026) shipped.** Listing in the marketplace is now gated on a paid audit.
+> Free preview shows quality at a glance (Strong / Moderate / Needs Work), exhibit
+> counts, and a 48h countdown. Audit unlocks the numerical score, sources, criterion
+> breakdown, 3 specific recommendations, and listing eligibility (90 days). Add-ons:
+> Manager Kit $19, Express Evidence $29, Re-list Boost $29, Re-audit $9.
+
+> **v2.0 (May 2026) shipped.** The demo uses the **claim** mechanic — flat unlock fee
 > per evidence-quality band ($300 / $400 / $500), first vetted firm wins exclusive 7-day
 > engagement, no auctions, no losers. The legacy bid endpoints return 410 Gone; see
 > `docs/marketplace.md` for the appendix on the retired v1 bid model.
@@ -77,6 +85,7 @@ pnpm dev
 # Firms:    http://localhost:3000/firms
 ```
 
-The app auto-seeds 3 firms + 5 cases on first request (active claim, listed pool, dossier
-ready, engaged, released-back — every claim state). No DB required to run the demo —
-data lives at `apps/web/.data/marketplace.json` (delete to reset).
+The app auto-seeds 3 firms + 10 cases on first request — every audit state
+(`dossier_preview`, `audited`, `audit_expired`) and every claim state (`listed`,
+`claimed`, `engaged`, `released_back`). No DB required to run the demo — data lives at
+`apps/web/.data/marketplace.json` (delete to reset).

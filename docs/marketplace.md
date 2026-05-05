@@ -5,6 +5,13 @@ AI builds an 80%-complete petition draft + evidence dossier → vetted O-1B firm
 curated inbox → first eligible firm **claims** the case for a flat unlock fee → firm
 finishes and files inside the VisaTrack console.
 
+> **v3.0 — May 2026:** Added the artist audit funnel in front of listing. Listing is still
+> free, but it's now gated on a paid audit ($19 Standard / $49 Audit + Concierge). Free
+> dossier preview replaces the v2 "free, immediate dossier"; preview locks after 48h.
+> See [`audit-funnel.md`](audit-funnel.md) for the full flow + API surface. The firm side
+> of the marketplace is unchanged — claim mechanics, unlock fees, and the 7-day engagement
+> window all carry over.
+
 > **v2.0 — May 2026:** Migrated from the original bid mechanic to the claim mechanic. Flat
 > unlock fee, first-vetted-firm-wins, 7-day exclusive engagement window, no auctions, no
 > losers, no fee splits. The legacy bid surface is preserved as an appendix at the bottom
@@ -41,7 +48,9 @@ The "Send magic link" button shows the link inline in the demo so you can just c
 
 ## Pricing
 
-Flat unlock fee per case, keyed by evidence-quality band (computed from `evidenceScore`):
+Flat unlock fee per case, keyed by evidence-quality band (computed from `evidenceScore`).
+Sourced from `apps/web/src/lib/pricing.ts` (`PRICING.case_unlock_by_band`) so the firm
+unlock fees and the artist audit prices share a single source of truth.
 
 | Band | Score range | Unlock fee |
 | --- | --- | --- |
@@ -51,6 +60,16 @@ Flat unlock fee per case, keyed by evidence-quality band (computed from `evidenc
 
 Stripe wiring is Track B. For the demo, the fee is recorded on the claim row at claim time;
 no actual charge is made.
+
+### Listing is gated on an audit
+
+A case can only be listed once the artist has purchased an audit and the audit hasn't
+expired. `POST /api/cases/[caseId]/list` returns `402 Payment Required` with
+`{ code: 'audit_required', auditEndpoint }` for any case whose status isn't `audited`
+(or whose latest `artist_audits` row has passed `expiresAt`). The artist UI catches the
+`/match` route at the layout level and redirects back to `/dossier/[caseId]?from=match` so
+they never land on a dead-end form. Full flow + tiers in
+[`audit-funnel.md`](audit-funnel.md).
 
 ## Artist flow
 
@@ -110,7 +129,9 @@ no actual charge is made.
 | POST | `/api/intake/start` | upsert artist + send magic link (step 1) |
 | POST | `/api/intake/submit` | create case in `processing` |
 | POST | `/api/intake/[caseId]/finalize` | generate mock evidence + flip to `dossier_ready` |
-| POST | `/api/cases/[caseId]/list` | save matching prefs + flip to `listed` + notify firms |
+| POST | `/api/cases/[caseId]/list` | save matching prefs + flip to `listed` + notify firms. **402 audit_required** if the case has not been audited or the audit expired. |
+| POST | `/api/cases/[caseId]/audit` | v3 audit funnel — body `{ tier }`. See [audit-funnel.md](audit-funnel.md). |
+| POST | `/api/cases/[caseId]/addon` | v3 audit funnel — body `{ kind }`. |
 | POST | `/api/cases/[caseId]/claim` | firm claims the case (firm session required) |
 | POST | `/api/claims/[claimId]/log-engagement` | firm logs first contact with artist |
 | POST | `/api/claims/[claimId]/release` | admin-only release of an active claim |
