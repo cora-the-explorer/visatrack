@@ -54,7 +54,11 @@ const fixedIds = {
 const NOW = new Date('2026-05-04T12:00:00Z').toISOString();
 const MS_DAY = 86_400_000;
 const offset = (days: number) => new Date(Date.parse(NOW) + days * MS_DAY).toISOString();
-const hoursAgo = (h: number) => new Date(Date.parse(NOW) - h * 60 * 60 * 1000).toISOString();
+// hoursAgo is relative to wall-clock now so countdowns reflect "right now"
+// when the seed first writes (the file persists; subsequent runs load the
+// already-written values). Track A only — Track B will use real timestamps.
+const hoursAgo = (h: number) =>
+  new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
 
 export function buildSeed(): StoreShape {
   const firms: FirmProfile[] = [
