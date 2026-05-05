@@ -1,10 +1,17 @@
 // Shared API logic for marketplace routes.
 // Route handlers in app/api/* are thin wrappers around these.
 import { z } from 'zod';
-import { store, unlockFeeCentsForCase, pricingBandForScore } from './store';
+import {
+  store,
+  unlockFeeCentsForCase,
+  pricingBandForScore,
+  type AuditTier,
+  type AuditAddonKind,
+} from './store';
 import { generateEvidence, scoreEvidence, criteriaCoverage } from './mock-evidence';
 import { sendEmail, magicLinkEmail } from './email';
 import { makeToken } from './session';
+import { auditPriceCents, addonPriceCents } from './pricing';
 
 const baseUrl = () =>
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
@@ -93,6 +100,8 @@ export async function intakeSubmit(input: z.infer<typeof intakeSubmitSchema>) {
   return { caseId: created.id };
 }
 
+// v3 audit funnel: post-evidence default is `dossier_preview`. Listing is
+// blocked until the artist purchases an audit (see /api/cases/:id/audit).
 export async function finalizeCase(id: string) {
   const existing = await store.getCase(id);
   if (!existing) return null;
@@ -107,8 +116,101 @@ export async function finalizeCase(id: string) {
     evidenceData: evidence,
     evidenceScore: scoreEvidence(id),
     criteriaCoverage: criteriaCoverage(id),
-    status: 'dossier_ready',
+    status: 'dossier_preview',
   });
+}
+
+// v3 audit funnel — buying an audit flips dossier_preview → audited and
+// records the purchase. Stripe wiring is Track B; demo records priceCents
+// only. expiresAt = paidAt + 90d.
+export const purchaseAuditSchema = z.object({
+  tier: z.enum(['standard', 'concierge']),
+});
+
+export class AuditRequiredError extends Error {
+  constructor(message = 'audit required') {
+    super(message);
+    this.name = 'AuditRequiredError';
+  }
+}
+
+export async function purchaseAudit(
+  caseId: string,
+  input: z.infer<typeof purchaseAuditSchema>,
+) {
+  const c = await store.getCase(caseId);
+  if (!c) throw new Error('case not found');
+  if (
+    c.status !== 'dossier_preview' &&
+    c.status !== 'audit_expired' &&
+    // tolerant: legacy dossier_ready cases can also buy an audit to enter the
+    // funnel without re-running intake
+    c.status !== 'dossier_ready'
+  ) {
+    throw new Error(`case is not eligible for audit (status: ${c.status})`);
+  }
+  const tier = input.tier as AuditTier;
+  const priceCents = auditPriceCents(tier);
+  const audit = await store.createAudit({
+    caseId,
+    tier,
+    priceCents,
+    stripeChargeId: null,
+  });
+  await store.updateCase(caseId, { status: 'audited' });
+  const artist = await store.getArtistById(c.artistId);
+  const stage = c.intakeData?.stage_name || c.intakeData?.legal_name || 'Artist';
+  if (artist) {
+    await sendEmail({
+      to: artist.email,
+      subject: `Audit unlocked — ${stage}'s dossier`,
+      html: `<p>Your ${tier === 'concierge' ? 'Audit + Concierge' : 'Standard Audit'} is unlocked.</p>
+<p>Score, criterion breakdown, and 3 specific actions are now visible. Listing eligibility is open for the next 90 days.</p>
+<p><a href="${baseUrl()}/dossier/${caseId}">Open your full dossier →</a></p>`,
+    });
+  }
+  return { audit, priceCents, tier };
+}
+
+export const purchaseAddonSchema = z.object({
+  kind: z.enum(['manager_kit', 'express_evidence', 'relist_boost', 're_audit']),
+});
+
+export async function purchaseAddon(
+  caseId: string,
+  input: z.infer<typeof purchaseAddonSchema>,
+) {
+  const c = await store.getCase(caseId);
+  if (!c) throw new Error('case not found');
+  const kind = input.kind as AuditAddonKind;
+  const priceCents = addonPriceCents(kind);
+
+  if (kind === 're_audit') {
+    // Re-audit: regenerate evidence + new audit window. Allowed from any
+    // post-preview state (audit_expired is the typical entry point).
+    const stage = c.intakeData?.stage_name || c.intakeData?.legal_name || 'Artist';
+    const genre = c.intakeData?.genre || 'House';
+    const platform = c.intakeData?.primary_platform || 'DJ / Electronic';
+    const evidence = generateEvidence(c.id, stage, genre, platform);
+    await store.updateCase(c.id, {
+      evidenceData: evidence,
+      evidenceScore: scoreEvidence(c.id),
+      criteriaCoverage: criteriaCoverage(c.id),
+      status: 'audited',
+    });
+    // Re-audit is also a paid audit purchase: refresh expiry and create a row
+    // tagged as a Standard audit so we can read the active-audit timer
+    // uniformly from `artist_audits`.
+    await store.createAudit({
+      caseId: c.id,
+      tier: 'standard',
+      priceCents,
+      stripeChargeId: null,
+    });
+  }
+
+  const addon = await store.createAddon({ caseId, kind, priceCents });
+  return { addon, priceCents, kind };
 }
 
 export const listCaseSchema = z.object({
@@ -121,6 +223,19 @@ export const listCaseSchema = z.object({
 export async function listCase(id: string, input: z.infer<typeof listCaseSchema>) {
   const c0 = await store.getCase(id);
   if (!c0) throw new Error('case not found');
+  // v3 gate: listing requires an audit. Block unless status is `audited`
+  // and there's an unexpired audit row.
+  if (c0.status !== 'audited') {
+    throw new AuditRequiredError(
+      'Listing requires a paid audit. POST /api/cases/:id/audit first.',
+    );
+  }
+  const audit = await store.getActiveAuditForCase(id);
+  if (!audit) {
+    throw new AuditRequiredError(
+      'Audit has expired. Re-audit ($9) before listing.',
+    );
+  }
   await store.updateCase(id, {
     targetVisaDate: input.targetVisaDate,
     location: input.location,

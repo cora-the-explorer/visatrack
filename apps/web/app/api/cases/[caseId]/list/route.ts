@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listCase, listCaseSchema } from '@/lib/marketplace-api';
+import { listCase, listCaseSchema, AuditRequiredError } from '@/lib/marketplace-api';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +14,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ caseId: string
     const out = await listCase(caseId, parsed.data);
     return NextResponse.json({ ok: true, ...out });
   } catch (e) {
+    if (e instanceof AuditRequiredError) {
+      return NextResponse.json(
+        {
+          error: e.message,
+          code: 'audit_required',
+          auditEndpoint: `/api/cases/${caseId}/audit`,
+        },
+        { status: 402 },
+      );
+    }
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
 }
