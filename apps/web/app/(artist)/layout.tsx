@@ -1,15 +1,18 @@
 import type { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
 import { ToastProvider } from '@visa-track/ui';
-import { ArtistSidebar } from '@/components/layout/artist-sidebar';
+import { getSession } from '@/lib/session';
+import { ArtistShell } from '@/components/marketplace/artist-shell';
 
-export const metadata = { title: 'Artist Portal' };
+export const metadata = { title: 'Artist Portal · VisaTrack' };
 
-export default function ArtistLayout({ children }: { children: ReactNode }) {
+export default async function ArtistLayout({ children }: { children: ReactNode }) {
+  const session = await getSession();
+  if (!session || session.kind !== 'artist') redirect('/login?role=artist');
   return (
     <ToastProvider>
-      <div className="flex min-h-screen bg-white text-slate-900">
-        <ArtistSidebar />
-        <main className="flex flex-1 flex-col pt-14 pb-16 md:pt-0 md:pb-0">{children}</main>
+      <div className="vt-dark" style={{ minHeight: '100vh' }}>
+        <ArtistShell email={session.email}>{children}</ArtistShell>
       </div>
     </ToastProvider>
   );
