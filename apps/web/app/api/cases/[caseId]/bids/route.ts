@@ -1,24 +1,21 @@
 import { NextResponse } from 'next/server';
-import { submitBid, submitBidSchema } from '@/lib/marketplace-api';
-import { getSession } from '@/lib/session';
 
+// DEPRECATED — v2 claim model. Bid submission has been replaced by the
+// flat-fee claim flow. See POST /api/cases/[caseId]/claim.
 export const runtime = 'nodejs';
 
-export async function POST(req: Request, ctx: { params: Promise<{ caseId: string }> }) {
-  const { caseId } = await ctx.params;
-  const session = await getSession();
-  if (!session || session.kind !== 'firm') {
-    return NextResponse.json({ error: 'firm session required' }, { status: 401 });
-  }
-  const json = await req.json().catch(() => ({}));
-  const parsed = submitBidSchema.safeParse({ ...json, firmId: session.firmId });
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'invalid input', details: parsed.error.issues }, { status: 400 });
-  }
-  try {
-    const out = await submitBid(caseId, parsed.data);
-    return NextResponse.json({ ok: true, ...out });
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
-  }
+const DEPRECATION = {
+  error: 'gone',
+  message:
+    'POST /api/cases/[caseId]/bids was removed in the v2 claim model. ' +
+    'Use POST /api/cases/[caseId]/claim — first eligible firm wins a flat unlock fee and 7-day exclusive engagement.',
+  migration: {
+    from: 'POST /api/cases/:caseId/bids',
+    to: 'POST /api/cases/:caseId/claim',
+    docs: '/docs/marketplace.md',
+  },
+} as const;
+
+export async function POST(_req: Request) {
+  return NextResponse.json(DEPRECATION, { status: 410 });
 }

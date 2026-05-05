@@ -1,13 +1,15 @@
 // Shared API logic for marketplace routes.
 // Route handlers in app/api/* are thin wrappers around these.
 import { z } from 'zod';
-import { store } from './store';
+import { store, unlockFeeCentsForCase, pricingBandForScore } from './store';
 import { generateEvidence, scoreEvidence, criteriaCoverage } from './mock-evidence';
 import { sendEmail, magicLinkEmail } from './email';
 import { makeToken } from './session';
 
 const baseUrl = () =>
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+
+const fmt$ = (cents: number) => `$${(cents / 100).toLocaleString('en-US')}`;
 
 export async function issueMagicLink(opts: {
   email: string;
@@ -62,7 +64,7 @@ export async function intakeStart(input: z.infer<typeof intakeStartSchema>) {
     email: a.email,
     role: 'artist',
     heading: 'Your VisaTrack dossier is being built',
-    body: 'Use this link to come back to your dossier and review firm bids whenever you want.',
+    body: 'Use this link to come back to your dossier and see which firm claimed your case.',
   });
   return { artistId: a.id, magicLink };
 }
@@ -128,13 +130,17 @@ export async function listCase(id: string, input: z.infer<typeof listCaseSchema>
   });
   const artist = await store.getArtistById(c0.artistId);
   const stageName = artist?.stageName || artist?.legalName || 'an artist';
+  const fee = unlockFeeCentsForCase(c0);
   const firms = await store.listApprovedFirms();
   await Promise.all(
     firms.map((f) =>
       sendEmail({
         to: f.contactEmail,
         subject: `New O-1B dossier listed — ${stageName}`,
-        html: `<p>A new dossier just hit your VisaTrack inbox.</p><p>Stage name: <b>${stageName}</b><br/>Budget: ${input.budgetBand}<br/>Target: ${input.targetVisaDate || '—'}</p><p><a href="${baseUrl()}/marketplace/${id}">Open in marketplace →</a></p>`,
+        html: `<p>A new dossier just hit your VisaTrack inbox.</p>
+<p>Stage name: <b>${stageName}</b><br/>Budget: ${input.budgetBand}<br/>Target: ${input.targetVisaDate || '—'}<br/>Unlock fee: <b>${fmt$(fee)}</b></p>
+<p>First eligible firm to claim wins exclusive 7-day engagement.</p>
+<p><a href="${baseUrl()}/marketplace/${id}">Open in marketplace →</a></p>`,
       }),
     ),
   );
@@ -144,88 +150,130 @@ export async function listCase(id: string, input: z.infer<typeof listCaseSchema>
       email: artist.email,
       role: 'artist',
       heading: 'Firms are reviewing your case',
-      body: 'You can review every bid as it comes in. Most firms respond inside 48 hours.',
+      body: 'A vetted firm will claim your case soon. We will email you the moment it happens.',
     });
   }
   return { magicLink };
 }
 
-export const submitBidSchema = z.object({
+// v2 claim model — replaces submitBid.
+export const claimCaseSchema = z.object({
   firmId: z.string(),
-  priceCents: z.number().int().positive(),
-  timelineWeeks: z.number().int().positive(),
-  pitch: z.string().min(20),
-  sampleUrl: z.string().optional(),
 });
 
-export async function submitBid(caseId: string, input: z.infer<typeof submitBidSchema>) {
+export async function claimCase(caseId: string, input: z.infer<typeof claimCaseSchema>) {
   const ac = await store.getCase(caseId);
   if (!ac) throw new Error('case not found');
+  if (ac.status !== 'listed') throw new Error('case is not available to claim');
   const firm = await store.getFirm(input.firmId);
   if (!firm) throw new Error('firm not found');
   if (firm.status !== 'approved') throw new Error('firm not approved');
-  const bid = await store.createBid({
+  const existing = await store.getActiveClaimForCase(caseId);
+  if (existing) throw new Error('case already claimed');
+  const unlockFeeCents = unlockFeeCentsForCase(ac);
+  // Stripe charge wiring is Track B. For the demo we just record the unlock
+  // fee captured from CASE_PRICING at claim time.
+  const claim = await store.createClaim({
     caseId,
     firmId: firm.id,
-    priceCents: input.priceCents,
-    timelineWeeks: input.timelineWeeks,
-    pitch: input.pitch,
-    sampleUrl: input.sampleUrl,
-    status: 'pending',
+    unlockFeeCents,
+  });
+  await store.updateCase(caseId, { status: 'claimed' });
+  const handoff = await store.createHandoff({
+    caseId: ac.id,
+    firmId: firm.id,
+    claimId: claim.id,
+    introSentAt: new Date().toISOString(),
+    notes: 'Auto-created on claim. Firm has 7 days to log first engagement with the artist.',
   });
   const artist = await store.getArtistById(ac.artistId);
-  if (artist) {
-    await sendEmail({
-      to: artist.email,
-      subject: `New bid on your dossier — ${firm.displayName}`,
-      html: `<p><b>${firm.displayName}</b> just bid on your case.</p><p>$${(bid.priceCents / 100).toLocaleString('en-US')} · ${bid.timelineWeeks} weeks</p><p><a href="${baseUrl()}/portal/bids/${bid.id}">Open in your portal →</a></p>`,
-    });
-  }
-  return { bidId: bid.id };
-}
-
-export async function acceptBid(bidId: string) {
-  const bid = await store.getBid(bidId);
-  if (!bid) throw new Error('bid not found');
-  const c0 = await store.getCase(bid.caseId);
-  const firm = await store.getFirm(bid.firmId);
-  const artist = c0 ? await store.getArtistById(c0.artistId) : undefined;
-  if (!c0 || !firm || !artist) throw new Error('related rows missing');
-  await store.updateBid(bid.id, { status: 'accepted', decidedAt: new Date().toISOString() });
-  const siblings = await store.listBidsForCase(c0.id);
-  await Promise.all(
-    siblings
-      .filter((b) => b.id !== bid.id && b.status === 'pending')
-      .map((b) => store.updateBid(b.id, { status: 'declined', decidedAt: new Date().toISOString() })),
-  );
-  await store.updateCase(c0.id, { status: 'matched' });
-  const ho = await store.createHandoff({
-    caseId: c0.id,
-    firmId: firm.id,
-    acceptedBidId: bid.id,
-    introSentAt: new Date().toISOString(),
-    notes: 'Auto-created on bid acceptance.',
-  });
+  const stage = artist?.stageName || artist?.legalName || 'Artist';
   await Promise.all([
-    sendEmail({
-      to: artist.email,
-      subject: `You matched with ${firm.displayName}`,
-      html: `<p>Your O-1B case is now with <b>${firm.displayName}</b>.</p><p>Contact: ${firm.contactName || ''} &lt;${firm.contactEmail}&gt;</p><p>Bid: $${(bid.priceCents / 100).toLocaleString('en-US')} · ${bid.timelineWeeks} weeks</p><p><a href="${baseUrl()}/portal/bids/${bid.id}">View in your portal →</a></p>`,
-    }),
+    artist
+      ? sendEmail({
+          to: artist.email,
+          subject: `${firm.displayName} just claimed your O-1B case`,
+          html: `<p>Your case has been claimed by <b>${firm.displayName}</b>.</p>
+<p>${firm.contactName ? `${firm.contactName} ` : ''}will reach out within 7 days from <a href="mailto:${firm.contactEmail}">${firm.contactEmail}</a>.</p>
+<p><a href="${baseUrl()}/portal/firm">View your firm in the portal →</a></p>`,
+        })
+      : Promise.resolve(),
     sendEmail({
       to: firm.contactEmail,
-      subject: `You won an O-1B case — ${artist.stageName || artist.legalName || 'Artist'}`,
-      html: `<p>The artist accepted your bid.</p><p>Stage name: <b>${artist.stageName || artist.legalName}</b><br/>Email: ${artist.email}<br/>Phone: ${artist.phone || '—'}</p><p><a href="${baseUrl()}/cases/${c0.id}">Open in your case console →</a></p>`,
+      subject: `You claimed an O-1B case — ${stage}`,
+      html: `<p>You claimed <b>${stage}</b>'s case for ${fmt$(unlockFeeCents)}.</p>
+<p>Artist contact: ${artist?.legalName || stage} &lt;${artist?.email || ''}&gt; · ${artist?.phone || 'phone n/a'}</p>
+<p>You have a <b>7-day exclusive engagement window</b>. Log first contact in the case console — otherwise the case auto-releases back to the pool.</p>
+<p><a href="${baseUrl()}/cases/${ac.id}">Open in your case console →</a></p>`,
     }),
   ]);
-  return { handoffId: ho.id };
+  return { claimId: claim.id, handoffId: handoff.id, unlockFeeCents };
 }
 
-export async function declineBid(bidId: string) {
-  const bid = await store.getBid(bidId);
-  if (!bid) throw new Error('not found');
-  await store.updateBid(bidId, { status: 'declined', decidedAt: new Date().toISOString() });
-  return { ok: true };
+export async function logEngagement(claimId: string) {
+  const claim = await store.getClaim(claimId);
+  if (!claim) throw new Error('claim not found');
+  if (claim.status === 'released' || claim.status === 'closed') {
+    throw new Error('claim is no longer active');
+  }
+  const updated = await store.updateClaim(claimId, {
+    status: 'engaged',
+    engagedAt: claim.engagedAt ?? new Date().toISOString(),
+  });
+  return { claim: updated };
+}
+
+export async function releaseClaim(
+  claimId: string,
+  reason = 'manually released',
+): Promise<{ claimId: string }> {
+  const claim = await store.getClaim(claimId);
+  if (!claim) throw new Error('claim not found');
+  if (claim.status === 'released' || claim.status === 'closed') {
+    return { claimId };
+  }
+  const releasedAt = new Date().toISOString();
+  await store.updateClaim(claimId, {
+    status: 'released',
+    releasedAt,
+    releaseReason: reason,
+  });
+  await store.updateCase(claim.caseId, { status: 'listed' });
+  const ac = await store.getCase(claim.caseId);
+  const artist = ac ? await store.getArtistById(ac.artistId) : undefined;
+  const firm = await store.getFirm(claim.firmId);
+  if (artist && firm) {
+    await Promise.all([
+      sendEmail({
+        to: artist.email,
+        subject: 'Your case is back in the marketplace',
+        html: `<p>${firm.displayName} did not engage within their 7-day window. Your case has been returned to the pool — another firm should claim it shortly.</p>`,
+      }),
+      sendEmail({
+        to: firm.contactEmail,
+        subject: 'Claim released — engagement window expired',
+        html: `<p>The 7-day window on this claim elapsed without an engagement log, so the case has been released back to the pool. This affects your firm score.</p>`,
+      }),
+    ]);
+  }
+  return { claimId };
+}
+
+// DEPRECATED — v2 claim model. Bid endpoints return 410 Gone with a pointer
+// to the claim equivalents. The functions below remain only so existing
+// imports compile during the deprecation window; routes call them no longer.
+export async function submitBid(): Promise<never> {
+  throw new Error(
+    'POST /api/cases/:caseId/bids is deprecated — use POST /api/cases/:caseId/claim',
+  );
+}
+
+export async function acceptBid(): Promise<never> {
+  throw new Error('POST /api/bids/:bidId/accept is deprecated in the v2 claim model');
+}
+
+export async function declineBid(): Promise<never> {
+  throw new Error('POST /api/bids/:bidId/decline is deprecated in the v2 claim model');
 }
 
 export const firmApplySchema = z.object({
@@ -278,7 +326,7 @@ export async function approveFirm(id: string) {
     email: firm.contactEmail,
     role: 'firm',
     heading: `${firm.displayName} is approved on VisaTrack`,
-    body: 'You can now bid on cases. Click below to open your firm console.',
+    body: 'You can now claim cases. Click below to open your firm console.',
   });
   return { magicLink };
 }
@@ -308,3 +356,5 @@ export async function consumeMagicLink(token: string): Promise<
   }
   return { error: 'unsupported role' };
 }
+
+export { unlockFeeCentsForCase, pricingBandForScore };
