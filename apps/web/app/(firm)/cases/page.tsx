@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { store } from '@/lib/store';
+import { store, ENGAGEMENT_WINDOW_MS } from '@/lib/store';
 
 export const metadata = { title: 'My cases · VisaTrack' };
 
@@ -15,18 +15,29 @@ const STAGES = [
 
 type Stage = (typeof STAGES)[number]['key'];
 
+const fmt$ = (cents: number) => `$${(cents / 100).toLocaleString('en-US')}`;
+
+function daysRemaining(claimedAt: string): number {
+  const elapsed = Date.now() - Date.parse(claimedAt);
+  return Math.max(0, Math.ceil((ENGAGEMENT_WINDOW_MS - elapsed) / 86_400_000));
+}
+
 export default async function MyCasesPage() {
   const session = await getSession();
   if (!session || session.kind !== 'firm') redirect('/login?role=firm');
-  const myBids = await store.listBidsByFirm(session.firmId);
-  const won = myBids.filter((b) => b.status === 'accepted');
+  const myClaims = await store.listClaimsByFirm(session.firmId);
+  // Cases the firm is currently working: active or engaged claims.
+  const open = myClaims.filter((c) => c.status === 'active' || c.status === 'engaged');
   const cases = await Promise.all(
-    won.map(async (b) => ({ bid: b, c: await store.getCase(b.caseId) })),
+    open.map(async (cl) => ({ claim: cl, c: await store.getCase(cl.caseId) })),
   );
-  const valid = cases.filter((x) => !!x.c) as { bid: typeof myBids[number]; c: NonNullable<Awaited<ReturnType<typeof store.getCase>>> }[];
+  const valid = cases.filter((x) => !!x.c) as {
+    claim: typeof open[number];
+    c: NonNullable<Awaited<ReturnType<typeof store.getCase>>>;
+  }[];
 
-  // Naive stage assignment for the kanban — everything starts at "engaged".
-  // Future case-page changes can move things along.
+  // All claims start in the Engaged lane on claim. Future case-page
+  // transitions can move things along once filing UI lands.
   const lanes: Record<Stage, typeof valid> = {
     engaged: [],
     evidence: [],
@@ -50,7 +61,7 @@ export default async function MyCasesPage() {
       {valid.length === 0 ? (
         <div className="vt-card">
           <p style={{ margin: 0, color: 'var(--ink-2)' }}>
-            You haven't won a case yet. <Link href={'/marketplace' as never} className="vt-link">Browse the marketplace →</Link>
+            You haven't claimed a case yet. <Link href={'/marketplace' as never} className="vt-link">Browse the marketplace →</Link>
           </p>
         </div>
       ) : (
@@ -59,16 +70,21 @@ export default async function MyCasesPage() {
             <div key={stage.key} style={{ background: '#0e0e0e', border: '1px solid var(--rule)', padding: 14, minHeight: 360 }}>
               <div className="vt-section-eyebrow">{stage.label}</div>
               <div style={{ display: 'grid', gap: 10 }}>
-                {(lanes[stage.key] || []).map(({ bid, c }) => (
+                {(lanes[stage.key] || []).map(({ claim, c }) => (
                   <Link
-                    key={bid.id}
+                    key={claim.id}
                     href={`/cases/${c.id}` as never}
                     className="vt-card"
                     style={{ padding: 14, textDecoration: 'none', display: 'block' }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{c.intakeData?.stage_name || c.id.slice(0, 8)}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>
+                      {c.intakeData?.stage_name || c.id.slice(0, 8)}
+                    </div>
                     <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
-                      ${(bid.priceCents / 100).toLocaleString('en-US')} · {bid.timelineWeeks} wk
+                      {fmt$(claim.unlockFeeCents)} unlock ·{' '}
+                      {claim.status === 'engaged'
+                        ? 'engaged'
+                        : `${daysRemaining(claim.claimedAt)}d left`}
                     </div>
                   </Link>
                 ))}

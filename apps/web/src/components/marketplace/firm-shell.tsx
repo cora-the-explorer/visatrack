@@ -7,7 +7,7 @@ import './theme.css';
 
 const NAV = [
   { href: '/marketplace', label: 'Inbox' },
-  { href: '/marketplace/sent', label: 'Sent bids' },
+  { href: '/marketplace/claimed', label: 'Claimed' },
   { href: '/cases', label: 'My cases' },
   { href: '/settings', label: 'Settings' },
 ] as const;
