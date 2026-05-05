@@ -48,3 +48,18 @@ pnpm dev
 - `pnpm db:generate` — generate Drizzle migrations
 - `pnpm db:migrate` — apply migrations
 - `pnpm db:studio` — open Drizzle Studio
+
+## Marketplace MVP
+
+The current MVP is a two-sided marketplace: artists upload intake → AI builds a dossier
+→ vetted O-1B firms bid → artist matches with one. See **[docs/marketplace.md](docs/marketplace.md)**
+for the full flow, demo URLs, and API surface.
+
+```bash
+pnpm dev
+# Artists:  http://localhost:3000/
+# Firms:    http://localhost:3000/firms
+```
+
+The app auto-seeds 3 firms + 5 cases on first request. No DB required to run the demo —
+data lives at `apps/web/.data/marketplace.json` (delete to reset).
