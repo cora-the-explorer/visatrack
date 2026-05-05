@@ -1,6 +1,16 @@
-# Visa Track Firm Console
+# VisaTrack — Pre-Built Petition Platform
 
-Multi-tenant SaaS for immigration law firms to manage O-1B / P-1B visa cases end-to-end.
+**One sentence:** We build O-1B / P-1B petitions to 80% complete, then hand them to vetted immigration firms who finalize and file.
+
+A petition pre-build platform with a built-in firm network. Artists submit intake → AI gathers evidence + drafts petition → vetted firms claim cases for a flat unlock fee → firms finish and file inside the VisaTrack console.
+
+**Not** a lead marketplace. **Not** an auction. **Not** fee-split. See [visatrack-whitepaper.md](../../.openclaw/workspace/visatrack-whitepaper.md) for the full model.
+
+## Revenue Streams
+
+1. **Case unlock** — $300–500/case (firm pays for exclusive 7-day claim window)
+2. **SaaS console** — $200–400/mo (firms keep using it post-claim to file & track)
+3. **Artist concierge** — $99–299 (optional; priority + expedited evidence pulls)
 
 ## Stack
 
@@ -49,11 +59,17 @@ pnpm dev
 - `pnpm db:migrate` — apply migrations
 - `pnpm db:studio` — open Drizzle Studio
 
-## Marketplace MVP
+## Demo MVP (Track A)
 
-The current MVP is a two-sided marketplace: artists upload intake → AI builds a dossier
-→ vetted O-1B firms bid → artist matches with one. See **[docs/marketplace.md](docs/marketplace.md)**
-for the full flow, demo URLs, and API surface.
+The current demo runs the end-to-end flow: artists upload intake → AI builds a dossier
+→ vetted O-1B firms see the inbox → first eligible firm claims for a flat unlock fee →
+7-day exclusive engagement → handoff. See
+**[docs/marketplace.md](docs/marketplace.md)** for the full flow, demo URLs, and API surface.
+
+> **v2.0 (May 2026) shipped.** The demo now uses the **claim** mechanic — flat unlock fee
+> per evidence-quality band ($300 / $400 / $500), first vetted firm wins exclusive 7-day
+> engagement, no auctions, no losers. The legacy bid endpoints return 410 Gone; see
+> `docs/marketplace.md` for the appendix on the retired v1 bid model.
 
 ```bash
 pnpm dev
@@ -61,5 +77,6 @@ pnpm dev
 # Firms:    http://localhost:3000/firms
 ```
 
-The app auto-seeds 3 firms + 5 cases on first request. No DB required to run the demo —
+The app auto-seeds 3 firms + 5 cases on first request (active claim, listed pool, dossier
+ready, engaged, released-back — every claim state). No DB required to run the demo —
 data lives at `apps/web/.data/marketplace.json` (delete to reset).
